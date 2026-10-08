@@ -1,0 +1,451 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entradas TEDxUTNCórdoba</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: talón de entrada con el total arriba, después tipo de entrada, después el día a día, y al final el historial de reportes. */
+:root {
+  --plane: #f4f4f1; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #7b7973;
+  --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10); --wash: rgba(11,11,11,0.05);
+  --accent: #1c5cab; --up: #006300; --down: #b02a2a;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300;
+  --sans: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --plane: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #94928b;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10); --wash: rgba(255,255,255,0.06);
+    --accent: #6da7ec; --up: #0ca30c; --down: #e66767;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --plane: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #94928b;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10); --wash: rgba(255,255,255,0.06);
+  --accent: #6da7ec; --up: #0ca30c; --down: #e66767;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--plane); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.45; }
+.contenido { display: flex; flex-direction: column; gap: 20px; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: flex; flex-direction: column; gap: 20px; }
+h1, h2 { margin: 0; text-wrap: balance; }
+h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 17px; font-weight: 600; }
+.eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.sub { color: var(--ink-2); font-size: 13.5px; margin: 2px 0 0; }
+.mono { font-family: var(--mono); font-size: 12.5px; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; }
+header.top > div { min-width: 0; }
+.filter { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink-2); }
+select, .seg button { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--axis); border-radius: 6px; padding: 6px 10px; }
+select:focus-visible, .seg button:focus-visible, .daybtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Talón: el total a la izquierda, perforado, y los datos del corte a la derecha */
+.stub { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; display: grid; grid-template-columns: minmax(200px, 0.9fr) 2.4fr; }
+.stub-main { padding: 22px 24px; border-right: 2px dotted var(--axis); display: flex; flex-direction: column; gap: 4px; justify-content: center; min-width: 0; }
+.hero { font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: -0.03em; }
+.stub-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.fact { padding: 20px 20px; display: flex; flex-direction: column; gap: 4px; min-width: 0; border-left: 1px solid var(--grid); }
+.fact:first-child { border-left: 0; }
+.fact .label { font-size: 12.5px; color: var(--ink-2); }
+.fact .value { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; overflow-wrap: anywhere; }
+.fact .note { font-size: 12.5px; color: var(--muted); }
+.delta-up { color: var(--up); } .delta-down { color: var(--down); }
+
+.panel { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px 20px; }
+.panel-head > div { min-width: 0; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 2px; flex: none; display: inline-block; }
+.seg { display: inline-flex; }
+.seg button { border-radius: 0; margin-left: -1px; cursor: pointer; font-size: 13.5px; }
+.seg button:first-child { border-radius: 6px 0 0 6px; margin-left: 0; }
+.seg button:last-child { border-radius: 0 6px 6px 0; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); position: relative; }
+
+.scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th { text-align: left; font-weight: 500; font-size: 12.5px; color: var(--muted); padding: 0 12px 8px 0; white-space: nowrap; }
+td { padding: 9px 12px 9px 0; border-top: 1px solid var(--grid); vertical-align: middle; }
+th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+th:last-child, td:last-child { padding-right: 0; }
+td.name { min-width: 150px; }
+td.name span.n { display: inline-flex; align-items: baseline; gap: 8px; }
+td.name .sw { position: relative; top: 0; align-self: center; }
+td.barcell { width: 38%; min-width: 120px; }
+.track { height: 10px; display: flex; }
+.bar { height: 10px; border-radius: 0 4px 4px 0; min-width: 2px; }
+tr.padre td { font-weight: 600; }
+tr.padre .cuenta { font-weight: 400; color: var(--muted); font-size: 13px; }
+tr.hijo td { border-top-color: transparent; padding-top: 5px; padding-bottom: 5px; color: var(--ink-2); }
+tr.hijo td.name span.n { padding-left: 4px; }
+.rama { width: 10px; height: 10px; flex: none; align-self: center; border-left: 1px solid var(--axis); border-bottom: 1px solid var(--axis); position: relative; top: -4px; }
+tfoot td { font-weight: 600; border-top: 1px solid var(--axis); }
+.dim { color: var(--muted); }
+
+.chartbox { position: relative; }
+svg.chart { display: block; width: 100%; height: auto; overflow: visible; }
+svg.chart text { font-family: var(--sans); font-size: 11.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--axis); border-radius: 8px; padding: 9px 11px; font-size: 13px; box-shadow: 0 4px 14px rgba(0,0,0,0.12); min-width: 150px; z-index: 2; }
+.tip .t-date { color: var(--ink-2); font-size: 12.5px; }
+.tip .t-total { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+.tip .t-row { display: flex; align-items: center; gap: 7px; }
+.tip .t-row b { font-weight: 600; min-width: 2ch; text-align: right; font-variant-numeric: tabular-nums; }
+.tip .t-row span.l { color: var(--ink-2); }
+.key { width: 12px; height: 3px; border-radius: 2px; flex: none; }
+
+.day { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 20px 32px; border-top: 1px solid var(--grid); padding-top: 16px; }
+.day-pick { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.day-pick label { font-size: 12.5px; color: var(--ink-2); }
+.day-total { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+.day-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.day-list li { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--grid); }
+.day-list li:first-child { border-top: 0; padding-top: 0; }
+.day-list .q { margin-left: auto; font-weight: 600; font-variant-numeric: tabular-nums; }
+.empty { color: var(--ink-2); padding: 28px 0; text-align: center; max-width: 52ch; margin: 0 auto; }
+.changes { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+td.cambio { min-width: 220px; }
+
+@media (max-width: 860px) {
+  .stub { grid-template-columns: 1fr; }
+  .stub-main { border-right: 0; border-bottom: 2px dotted var(--axis); }
+  .stub-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fact:nth-child(odd) { border-left: 0; }
+  .fact:nth-child(n+3) { border-top: 1px solid var(--grid); }
+  .day { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .wrap { padding-inline: 16px; }
+  .panel { padding: 16px; }
+  .hero { font-size: 52px; }
+  .fact { padding: 14px 16px; } .fact .value { font-size: 21px; }
+  .hide-sm { display: none; }
+  table { font-size: 13.5px; } th, td { padding-right: 10px; }
+  td.name { min-width: 128px; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">TEDxUTNCórdoba · 6° edición</div>
+      <h1>Entradas habilitadas</h1>
+      <p class="sub" id="stamp">Cargando reportes…</p>
+    </div>
+    <label class="filter" for="sel-reporte" id="filter" hidden>Reporte
+      <select id="sel-reporte"></select>
+    </label>
+  </header>
+
+  <div id="estado" class="panel"><p class="empty" id="estado-txt">Cargando reportes…</p></div>
+
+  <main id="contenido" class="contenido" hidden>
+    <section class="stub" aria-label="Resumen del reporte">
+      <div class="stub-main">
+        <span class="eyebrow">Total habilitadas</span>
+        <span class="hero" id="k-total"></span>
+        <span class="sub" id="k-total-note"></span>
+      </div>
+      <div class="stub-facts" id="facts"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Consumo por tipo de entrada</h2>
+          <p class="sub">Entradas habilitadas de cada tipo, acumulado al momento del reporte.</p>
+        </div>
+        <div class="legend" id="legend-tipos"></div>
+      </div>
+      <div class="scroll"><table id="t-tipos"></table></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Consumo por día</h2>
+          <p class="sub">Según la fecha de compra de cada entrada (hora de Córdoba). Tocá un día para ver el detalle.</p>
+        </div>
+        <div class="seg" role="group" aria-label="Vista del gráfico">
+          <button type="button" id="m-dia" aria-pressed="true">Por día</button>
+          <button type="button" id="m-acum" aria-pressed="false">Acumulado</button>
+        </div>
+      </div>
+      <div class="legend" id="legend-dias"></div>
+      <div class="chartbox" id="chartbox"><svg class="chart" id="chart" role="img" aria-label="Entradas por día según tipo"></svg><div class="tip" id="tip" hidden></div></div>
+      <div class="day">
+        <div class="day-pick">
+          <label for="sel-dia">Detalle del día</label>
+          <select id="sel-dia"></select>
+          <div class="day-total" id="d-total"></div>
+          <div class="sub" id="d-note"></div>
+        </div>
+        <ul class="day-list" id="d-list"></ul>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Reportes cargados</h2>
+          <p class="sub">Queda un corte por día (un reporte nuevo del mismo día reemplaza al anterior). La variación compara contra el corte del día anterior.</p>
+        </div>
+      </div>
+      <div class="scroll"><table id="t-reportes"></table></div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  const GRUPOS = [
+    { id: 'preventa', label: 'Pre venta', c: 'var(--s1)' },
+    { id: 'general', label: 'General', c: 'var(--s2)' },
+    { id: 'sponsor', label: 'Sponsors', c: 'var(--s3)' },
+    { id: 'utn', label: 'UTN', c: 'var(--s4)' },
+    { id: 'invitacion', label: 'Invitaciones', c: 'var(--s5)' },
+    { id: 'otros', label: 'Otros', c: 'var(--s6)' },
+  ];
+  const GI = Object.fromEntries(GRUPOS.map((g, i) => [g.id, i]));
+  const $ = (id) => document.getElementById(id);
+  const NS = 'http://www.w3.org/2000/svg';
+  const nf = new Intl.NumberFormat('es-AR');
+  const num = (n) => nf.format(n);
+  const money = (n) => '$ ' + nf.format(n);
+  const MES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+  const DOW = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  const parse = (iso) => { const [y, m, d] = iso.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+  const iso = (dt) => dt.toISOString().slice(0, 10);
+  const corta = (s) => { const d = parse(s); return d.getUTCDate() + ' ' + MES[d.getUTCMonth()]; };
+  const larga = (s) => { const d = parse(s); return DOW[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MES[d.getUTCMonth()]; };
+  const sub = (n) => { const i = n.indexOf(' - '); return i > 0 ? n.slice(i + 3).trim() : null; };
+  const signo = (n) => (n > 0 ? '+' : n < 0 ? '−' : '') + num(Math.abs(n));
+
+  function el(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    for (const k in (attrs || {})) {
+      if (k === 'class') n.className = attrs[k]; else if (k === 'style') n.style.cssText = attrs[k]; else n.setAttribute(k, attrs[k]);
+    }
+    for (const c of kids) if (c != null) n.append(c);
+    return n;
+  }
+  function sv(tag, attrs) { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; }
+  const sw = (c) => el('span', { class: 'sw', style: 'background:' + c });
+
+  const st = { reportes: [], sel: null, modo: 'dia', dia: null };
+
+  // Normaliza un documento del reporte; lo que no tenga la forma esperada se descarta.
+  function limpiar(id, d) {
+    if (!d || !Array.isArray(d.tipos) || !Array.isArray(d.dias)) return null;
+    const tipos = d.tipos.map((t) => ({
+      nombre: String(t.nombre), grupo: GI[t.grupo] != null ? t.grupo : 'otros',
+      cantidad: +t.cantidad || 0, precio: +t.precio || 0, recaudacion: +t.recaudacion || 0,
+    }));
+    const gDe = Object.fromEntries(tipos.map((t) => [t.nombre, t.grupo]));
+    const dias = d.dias.filter((x) => /^\d{4}-\d{2}-\d{2}$/.test(x.dia)).map((x) => {
+      const ts = (x.tipos || []).map((t) => ({ nombre: String(t.nombre), cantidad: +t.cantidad || 0, grupo: gDe[t.nombre] || 'otros' }));
+      const g = GRUPOS.map(() => 0);
+      ts.forEach((t) => { g[GI[t.grupo]] += t.cantidad; });
+      return { dia: x.dia, tipos: ts, g, total: ts.reduce((a, t) => a + t.cantidad, 0) };
+    }).sort((a, b) => a.dia < b.dia ? -1 : 1);
+    return {
+      id, fecha: /^\d{4}-\d{2}-\d{2}$/.test(d.fecha) ? d.fecha : id, hora: String(d.hora || ''),
+      total: +d.total || 0, pagas: +d.pagas || 0, sinCargo: +d.sinCargo || 0, recaudacion: +d.recaudacion || 0, tipos, dias,
+    };
+  }
+
+  function actual() { return st.reportes.find((r) => r.id === st.sel) || st.reportes[st.reportes.length - 1]; }
+  function anterior(r) { const i = st.reportes.indexOf(r); return i > 0 ? st.reportes[i - 1] : null; }
+  function cambios(r, p) {
+    const prev = Object.fromEntries(p.tipos.map((t) => [t.nombre, t]));
+    const out = [];
+    r.tipos.forEach((t) => { const d = t.cantidad - (prev[t.nombre] ? prev[t.nombre].cantidad : 0); if (d) out.push({ nombre: t.nombre, grupo: t.grupo, d }); delete prev[t.nombre]; });
+    Object.values(prev).forEach((t) => out.push({ nombre: t.nombre, grupo: t.grupo, d: -t.cantidad }));
+    return out.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
+  }
+
+  function render() {
+    const r = actual();
+    if (!r) return;
+    $('estado').hidden = true; $('contenido').hidden = false; $('filter').hidden = st.reportes.length < 2;
+    const p = anterior(r);
+    $('stamp').textContent = 'Corte del ' + larga(r.fecha) + (r.hora ? ', ' + r.hora + ' h' : '') + (r === st.reportes[st.reportes.length - 1] ? ' · último reporte cargado' : '');
+
+    const sel = $('sel-reporte');
+    sel.replaceChildren(...st.reportes.slice().reverse().map((x) => { const o = el('option', { value: x.id }, corta(x.fecha) + (x.hora ? ' · ' + x.hora : '')); if (x === r) o.selected = true; return o; }));
+
+    // Talón
+    $('k-total').textContent = num(r.total);
+    $('k-total-note').textContent = r.tipos.length + ' tipos de entrada';
+    const hoy = r.dias.find((x) => x.dia === r.fecha);
+    const facts = [];
+    if (p) {
+      const d = r.total - p.total;
+      facts.push(['Desde el reporte anterior', el('span', { class: d > 0 ? 'delta-up' : d < 0 ? 'delta-down' : '' }, signo(d) || '0'), 'vs corte del ' + corta(p.fecha)]);
+    } else {
+      facts.push(['Desde el reporte anterior', '—', 'Es el primer reporte']);
+    }
+    facts.push(['Consumidas el ' + corta(r.fecha), num(hoy ? hoy.total : 0), r.hora ? 'hasta las ' + r.hora + ' h' : 'día del reporte']);
+    facts.push(['Pagas / sin cargo', num(r.pagas) + ' / ' + num(r.sinCargo), Math.round(100 * r.pagas / Math.max(1, r.total)) + '% pagas']);
+    facts.push(['Recaudado', money(r.recaudacion), 'suma del precio de cada entrada']);
+    $('facts').replaceChildren(...facts.map(([l, v, n]) => el('div', { class: 'fact' }, el('span', { class: 'label' }, l), el('span', { class: 'value' }, v), el('span', { class: 'note' }, n))));
+
+    // Tipos
+    const usados = GRUPOS.filter((g) => r.tipos.some((t) => t.grupo === g.id));
+    const leyenda = () => usados.map((g) => el('span', null, sw(g.c), g.label));
+    $('legend-tipos').replaceChildren(...leyenda());
+    $('legend-dias').replaceChildren(...leyenda());
+    const prevT = p ? Object.fromEntries(p.tipos.map((t) => [t.nombre, t.cantidad])) : null;
+    // Agrupa: Sponsors por empresa y UTN por sector (lo que va después de " - " en el nombre).
+    const bloques = GRUPOS.map((g) => {
+      const ts = r.tipos.filter((t) => t.grupo === g.id);
+      const comp = ts.some((t) => sub(t.nombre));
+      const prevG = p ? p.tipos.filter((t) => t.grupo === g.id).reduce((a, t) => a + t.cantidad, 0) : 0;
+      return { g, ts, comp, cantidad: ts.reduce((a, t) => a + t.cantidad, 0), recaudacion: ts.reduce((a, t) => a + t.recaudacion, 0), prevG };
+    }).filter((b) => b.ts.length);
+    const max = Math.max(1, ...bloques.map((b) => b.comp ? b.cantidad : Math.max(...b.ts.map((t) => t.cantidad))));
+    const head = el('tr', null, el('th', null, 'Tipo de entrada'), el('th', { class: 'hide-sm' }, ''), el('th', { class: 'num' }, 'Entradas'),
+      p ? el('th', { class: 'num' }, 'Variación') : null, el('th', { class: 'num' }, '% del total'), el('th', { class: 'num hide-sm' }, 'Precio'), el('th', { class: 'num' }, 'Recaudado'));
+    const fila = (c, nombre, cant, d, precio, rec, tipo) => el('tr', { class: tipo },
+        el('td', { class: 'name' }, el('span', { class: 'n' }, tipo === 'hijo' ? el('span', { class: 'rama' }) : sw(c), nombre)),
+        el('td', { class: 'barcell hide-sm' }, el('div', { class: 'track' }, el('div', { class: 'bar', style: 'width:' + (100 * cant / max).toFixed(2) + '%;background:' + c + (tipo === 'hijo' ? ';opacity:.6' : '') }))),
+        el('td', { class: 'num' }, el('strong', null, num(cant))),
+        p ? el('td', { class: 'num ' + (d > 0 ? 'delta-up' : d < 0 ? 'delta-down' : 'dim') }, d ? signo(d) : '0') : null,
+        el('td', { class: 'num' }, (100 * cant / Math.max(1, r.total)).toFixed(1).replace('.', ',') + '%'),
+        el('td', { class: 'num hide-sm' }, precio === null ? '' : precio ? money(precio) : el('span', { class: 'dim' }, 'Sin cargo')),
+        el('td', { class: 'num' }, rec ? money(rec) : el('span', { class: 'dim' }, '—')));
+    const rows = [];
+    bloques.forEach((b) => {
+      const c = b.g.c;
+      if (!b.comp) { b.ts.forEach((t) => rows.push(fila(c, t.nombre, t.cantidad, prevT ? t.cantidad - (prevT[t.nombre] || 0) : 0, t.precio, t.recaudacion, ''))); return; }
+      const n = b.ts.length, unidad = b.g.id === 'sponsor' ? (n === 1 ? 'empresa' : 'empresas') : b.g.id === 'utn' ? (n === 1 ? 'sector' : 'sectores') : (n === 1 ? 'tipo' : 'tipos');
+      rows.push(fila(c, el('span', null, b.g.label, el('span', { class: 'cuenta' }, ' · ' + n + ' ' + unidad)), b.cantidad, b.cantidad - b.prevG, null, b.recaudacion, 'padre'));
+      b.ts.forEach((t) => rows.push(fila(c, sub(t.nombre) || t.nombre, t.cantidad, prevT ? t.cantidad - (prevT[t.nombre] || 0) : 0, t.precio, t.recaudacion, 'hijo')));
+    });
+    const foot = el('tr', null, el('td', null, 'Total'), el('td', { class: 'hide-sm' }, ''), el('td', { class: 'num' }, num(r.total)),
+      p ? el('td', { class: 'num' }, signo(r.total - p.total) || '0') : null, el('td', { class: 'num' }, '100%'), el('td', { class: 'hide-sm' }, ''), el('td', { class: 'num' }, money(r.recaudacion)));
+    $('t-tipos').replaceChildren(el('thead', null, head), el('tbody', null, ...rows), el('tfoot', null, foot));
+
+    // Día seleccionado
+    if (!st.dia || !r.dias.some((x) => x.dia === st.dia)) st.dia = r.dias.length ? r.dias[r.dias.length - 1].dia : null;
+    $('sel-dia').replaceChildren(...r.dias.slice().reverse().map((x) => { const o = el('option', { value: x.dia }, larga(x.dia) + ' · ' + num(x.total)); if (x.dia === st.dia) o.selected = true; return o; }));
+    renderDia(r);
+    renderChart(r);
+    renderReportes();
+  }
+
+  function renderDia(r) {
+    const x = r.dias.find((q) => q.dia === st.dia);
+    $('d-total').textContent = x ? num(x.total) + (x.total === 1 ? ' entrada' : ' entradas') : 'Sin movimiento';
+    const acum = r.dias.filter((q) => st.dia && q.dia <= st.dia).reduce((a, q) => a + q.total, 0);
+    $('d-note').textContent = st.dia ? num(acum) + ' acumuladas hasta ese día' : '';
+    $('d-list').replaceChildren(...(x ? x.tipos : []).map((t) => el('li', null, sw(GRUPOS[GI[t.grupo]].c), el('span', null, t.nombre), el('span', { class: 'q' }, num(t.cantidad)))));
+  }
+
+  function paso(max) { for (const s of [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 5000]) if (max / s <= 5) return s; return Math.ceil(max / 5); }
+
+  let serie = [];
+  function renderChart(r) {
+    const svg = $('chart'); const box = $('chartbox');
+    const W = Math.max(300, box.clientWidth || 900), H = 280, m = { l: 38, r: 6, t: 12, b: 28 };
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.replaceChildren();
+    if (!r.dias.length) return;
+    // Eje continuo: todos los días entre la primera compra y el corte, también los que no tuvieron movimiento.
+    const por = Object.fromEntries(r.dias.map((x) => [x.dia, x]));
+    const fin = r.fecha > r.dias[r.dias.length - 1].dia ? r.fecha : r.dias[r.dias.length - 1].dia;
+    serie = []; const run = GRUPOS.map(() => 0);
+    for (let d = parse(r.dias[0].dia); iso(d) <= fin; d = new Date(d.getTime() + 864e5)) {
+      const k = iso(d); const x = por[k]; const g = x ? x.g : GRUPOS.map(() => 0);
+      g.forEach((v, i) => { run[i] += v; });
+      serie.push({ dia: k, g, acum: run.slice(), total: x ? x.total : 0 });
+    }
+    const vals = (s) => st.modo === 'acum' ? s.acum : s.g;
+    const maxV = Math.max(1, ...serie.map((s) => vals(s).reduce((a, b) => a + b, 0)));
+    const stp = paso(maxV), top = Math.ceil(maxV / stp) * stp;
+    const pw = W - m.l - m.r, ph = H - m.t - m.b, band = pw / serie.length, bw = Math.max(2, Math.min(24, band - 2));
+    const y = (v) => m.t + ph - (v / top) * ph;
+    for (let v = 0; v <= top; v += stp) {
+      svg.append(sv('line', { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), stroke: v ? 'var(--grid)' : 'var(--axis)', 'stroke-width': 1 }));
+      const t = sv('text', { x: m.l - 8, y: y(v) + 4, 'text-anchor': 'end' }); t.textContent = num(v); svg.append(t);
+    }
+    const cada = [1, 2, 3, 7, 14, 28, 56].find((n) => n * band >= 46) || 56;
+    serie.forEach((s, i) => {
+      const cx = m.l + band * (i + 0.5);
+      if (s.dia === st.dia) svg.append(sv('rect', { x: cx - band / 2, y: m.t, width: band, height: ph, fill: 'var(--wash)' }));
+      if ((serie.length - 1 - i) % cada === 0) { const t = sv('text', { x: cx, y: H - 8, 'text-anchor': i === serie.length - 1 ? 'end' : 'middle' }); if (i === serie.length - 1) t.setAttribute('x', Math.min(W - m.r, cx + 16)); t.textContent = corta(s.dia); svg.append(t); }
+      const v = vals(s); let base = 0; const last = v.reduce((a, q, j) => q > 0 ? j : a, -1);
+      v.forEach((q, j) => {
+        if (q <= 0) return;
+        const y0 = y(base), y1 = y(base + q); base += q;
+        const gap = j === last ? 0 : Math.min(2, Math.max(0, (y0 - y1) - 1));
+        const yt = y1 + gap, h = Math.max(1, y0 - yt), x0 = cx - bw / 2;
+        if (j === last) {
+          const rr = Math.min(4, bw / 2, h);
+          svg.append(sv('path', { d: `M${x0},${yt + h}V${yt + rr}Q${x0},${yt} ${x0 + rr},${yt}H${x0 + bw - rr}Q${x0 + bw},${yt} ${x0 + bw},${yt + rr}V${yt + h}Z`, fill: GRUPOS[j].c }));
+        } else svg.append(sv('rect', { x: x0, y: yt, width: bw, height: h, fill: GRUPOS[j].c }));
+      });
+    });
+    const hit = sv('rect', { x: m.l, y: m.t, width: pw, height: ph + m.b, fill: 'transparent', style: 'cursor:pointer' });
+    const idx = (e) => { const b = svg.getBoundingClientRect(); const px = (e.clientX - b.left) * (W / b.width); return Math.max(0, Math.min(serie.length - 1, Math.floor((px - m.l) / band))); };
+    hit.addEventListener('pointermove', (e) => tip(serie[idx(e)], e));
+    hit.addEventListener('pointerleave', () => { $('tip').hidden = true; });
+    hit.addEventListener('click', (e) => { const s = serie[idx(e)]; if (s.total) { st.dia = s.dia; $('sel-dia').value = s.dia; renderDia(actual()); renderChart(actual()); } });
+    svg.append(hit);
+  }
+
+  function tip(s, e) {
+    const t = $('tip'); const v = st.modo === 'acum' ? s.acum : s.g; const tot = v.reduce((a, b) => a + b, 0);
+    t.replaceChildren(el('div', { class: 't-date' }, larga(s.dia) + (st.modo === 'acum' ? ' · acumulado' : '')),
+      el('div', { class: 't-total' }, tot ? num(tot) + (tot === 1 ? ' entrada' : ' entradas') : 'Sin movimiento'),
+      ...GRUPOS.map((g, j) => v[j] > 0 ? el('div', { class: 't-row' }, el('span', { class: 'key', style: 'background:' + g.c }), el('b', null, num(v[j])), el('span', { class: 'l' }, g.label)) : null).filter(Boolean));
+    t.hidden = false;
+    const b = $('chartbox').getBoundingClientRect(); const x = e.clientX - b.left, yy = e.clientY - b.top;
+    const w = t.offsetWidth, h = t.offsetHeight;
+    t.style.left = Math.max(0, Math.min(b.width - w, x + 14 + w > b.width ? x - w - 14 : x + 14)) + 'px';
+    t.style.top = Math.max(0, Math.min(b.height - h, yy - h / 2)) + 'px';
+  }
+
+  function renderReportes() {
+    const head = el('tr', null, el('th', null, 'Corte'), el('th', { class: 'num' }, 'Entradas'), el('th', { class: 'num' }, 'Variación'), el('th', { class: 'num hide-sm' }, 'Recaudado'), el('th', null, 'Qué cambió'));
+    const rows = st.reportes.slice().reverse().map((r) => {
+      const p = anterior(r); const d = p ? r.total - p.total : null; const ch = p ? cambios(r, p) : [];
+      const detalle = !p ? el('span', { class: 'dim' }, 'Primer reporte: ' + r.tipos.length + ' tipos de entrada')
+        : ch.length ? el('div', { class: 'changes' }, ...ch.map((c) => el('span', null, el('strong', { class: c.d > 0 ? 'delta-up' : 'delta-down' }, signo(c.d)), ' ' + c.nombre)))
+        : el('span', { class: 'dim' }, 'Sin cambios');
+      return el('tr', null, el('td', { class: 'mono', style: 'white-space:nowrap' }, corta(r.fecha) + (r.hora ? ' · ' + r.hora : '')), el('td', { class: 'num' }, el('strong', null, num(r.total))),
+        el('td', { class: 'num ' + (d > 0 ? 'delta-up' : d < 0 ? 'delta-down' : 'dim') }, d == null ? '—' : d ? signo(d) : '0'),
+        el('td', { class: 'num hide-sm' }, money(r.recaudacion)), el('td', { class: 'cambio' }, detalle));
+    });
+    $('t-reportes').replaceChildren(el('thead', null, head), el('tbody', null, ...rows));
+  }
+
+  function vacio(msg) { $('contenido').hidden = true; $('estado').hidden = false; $('estado-txt').textContent = msg; $('stamp').textContent = 'Sin reportes cargados'; $('filter').hidden = true; }
+
+  $('sel-reporte').addEventListener('change', (e) => { st.sel = e.target.value; st.dia = null; render(); });
+  $('sel-dia').addEventListener('change', (e) => { st.dia = e.target.value; renderDia(actual()); renderChart(actual()); });
+  const modo = (m) => { st.modo = m; $('m-dia').setAttribute('aria-pressed', m === 'dia'); $('m-acum').setAttribute('aria-pressed', m === 'acum'); renderChart(actual()); };
+  $('m-dia').addEventListener('click', () => modo('dia'));
+  $('m-acum').addEventListener('click', () => modo('acum'));
+  let ancho = 0;
+  new ResizeObserver(() => { const w = $('chartbox').clientWidth; if (w && w !== ancho && actual()) { ancho = w; renderChart(actual()); } }).observe($('chartbox'));
+
+  async function start() {
+    const db = window.claude && window.claude.use ? await window.claude.use('db') : null;
+    if (!db) return vacio('No se pudieron leer los reportes. Abrí el tablero desde Claude con tu sesión iniciada.');
+    db.collection('reportes').onSnapshot((snap) => {
+      st.reportes = snap.docs.map((d) => limpiar(d.id, d.data())).filter(Boolean).sort((a, b) => a.id < b.id ? -1 : 1);
+      if (!st.reportes.length) return vacio('Todavía no hay reportes cargados. Pasale a Claude el CSV de entradas habilitadas del día y el consumo aparece acá.');
+      render();
+    }, () => { if (!st.reportes.length) vacio('No se pudieron leer los reportes. Recargá la página para volver a intentar.'); });
+  }
+  start();
+})();
+</script>

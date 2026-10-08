@@ -1,0 +1,8 @@
+# Los reportes exportados tienen datos personales (nombres, DNI, mails, teléfonos): nunca se suben.
+*.csv
+*.xlsx
+datos/
+# Los resúmenes por reporte quedan en el tablero privado, no en el repo.
+reportes/
+*.json
+__pycache__/
