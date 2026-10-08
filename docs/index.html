@@ -1,3 +1,7 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Entradas TEDxUTNCórdoba</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -434,14 +438,27 @@ td.cambio { min-width: 220px; }
   let ancho = 0;
   new ResizeObserver(() => { const w = $('chartbox').clientWidth; if (w && w !== ancho && actual()) { ancho = w; renderChart(actual()); } }).observe($('chartbox'));
 
+  // Dentro de claude.ai lee la base del artifact; publicado en GitHub Pages lee reportes.json del mismo sitio.
   async function start() {
     const db = window.claude && window.claude.use ? await window.claude.use('db') : null;
-    if (!db) return vacio('No se pudieron leer los reportes. Abrí el tablero desde Claude con tu sesión iniciada.');
-    db.collection('reportes').onSnapshot((snap) => {
-      st.reportes = snap.docs.map((d) => limpiar(d.id, d.data())).filter(Boolean).sort((a, b) => a.id < b.id ? -1 : 1);
-      if (!st.reportes.length) return vacio('Todavía no hay reportes cargados. Pasale a Claude el CSV de entradas habilitadas del día y el consumo aparece acá.');
+    if (db) {
+      db.collection('reportes').onSnapshot((snap) => {
+        st.reportes = snap.docs.map((d) => limpiar(d.id, d.data())).filter(Boolean).sort((a, b) => a.id < b.id ? -1 : 1);
+        if (!st.reportes.length) return vacio('Todavía no hay reportes cargados. Pasale a Claude el CSV de entradas habilitadas del día y el consumo aparece acá.');
+        render();
+      }, () => { if (!st.reportes.length) vacio('No se pudieron leer los reportes. Recargá la página para volver a intentar.'); });
+      return;
+    }
+    try {
+      const res = await fetch('reportes.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      const j = await res.json();
+      st.reportes = (Array.isArray(j.reportes) ? j.reportes : []).map((d) => limpiar(String(d.fecha), d)).filter(Boolean).sort((a, b) => a.id < b.id ? -1 : 1);
+      if (!st.reportes.length) return vacio('Todavía no hay reportes cargados.');
       render();
-    }, () => { if (!st.reportes.length) vacio('No se pudieron leer los reportes. Recargá la página para volver a intentar.'); });
+    } catch (e) {
+      vacio('No se pudieron leer los reportes. Recargá la página para volver a intentar.');
+    }
   }
   start();
 })();

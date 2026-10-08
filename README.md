@@ -8,7 +8,8 @@ y la variación entre un reporte y el siguiente.
 
 | Archivo | Para qué sirve |
 |---|---|
-| `tablero/entradas.html` | La página del tablero. Está publicada como artifact en claude.ai y lee los reportes de la base de datos del artifact. |
+| `docs/index.html` | La página del tablero. Publicada en GitHub Pages lee `docs/reportes.json`; publicada como artifact en claude.ai lee la base de datos del artifact. |
+| `docs/reportes.json` | Todos los cortes agregados (solo totales, sin datos personales) que muestra GitHub Pages. |
 | `scripts/procesar_reporte.py` | Convierte el CSV de entradas habilitadas en un resumen agregado, sin datos personales. Solo usa la librería estándar de Python 3.9+, no hace falta instalar nada. |
 
 ## Cómo se carga un reporte
@@ -17,12 +18,20 @@ y la variación entre un reporte y el siguiente.
 2. Generá el resumen:
 
    ```bash
-   python3 -I scripts/procesar_reporte.py "tickets_HABILITADAS-07-10-2026 19.19 pm.csv" 2026-10-07.json
+   python3 -I scripts/procesar_reporte.py "tickets_HABILITADAS-07-10-2026 19.19 pm.csv" 2026-10-07.json --acumular docs/reportes.json
    ```
 
    La fecha y la hora del corte se toman del nombre del archivo (acepta hora de 24 h o con am/pm), y las fechas de compra se pasan a hora de Córdoba.
-3. Ese resumen se guarda en la colección `reportes` del tablero, con la fecha del corte como id.
-   Un reporte nuevo del mismo día reemplaza al anterior.
+3. Con `--acumular`, el corte se suma a `docs/reportes.json` (un corte del mismo día reemplaza al anterior).
+   Hacé commit y push de ese archivo y GitHub Pages se actualiza en uno o dos minutos.
+4. Para el artifact de claude.ai, el mismo resumen se guarda en la colección `reportes` de su base, con la fecha del corte como id.
+
+## GitHub Pages
+
+Settings → Pages → Build and deployment → Source: *Deploy from a branch*, rama `main`, carpeta `/docs`.
+
+El repo es público, así que `docs/reportes.json` (recaudación y cantidades por sponsor y sector) queda visible para cualquiera.
+Es temporal: al terminar, borrar el archivo no alcanza porque queda en el historial de git; hay que pasar el repo a privado o borrarlo.
 
 ## Cómo se clasifican las entradas
 

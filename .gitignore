@@ -6,3 +6,5 @@ datos/
 reportes/
 *.json
 __pycache__/
+# Excepción temporal: solo totales agregados, para el tablero en GitHub Pages durante la semana del evento.
+!docs/reportes.json

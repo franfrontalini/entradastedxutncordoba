@@ -1,5 +1,7 @@
 """Convierte un CSV de entradas habilitadas en el resumen agregado (sin datos personales) que usa el tablero.
-Uso: python3 -I procesar_reporte.py <csv> <salida.json>
+Uso: python3 -I procesar_reporte.py <csv> <salida.json> [--acumular docs/reportes.json]
+Con --acumular, además agrega el corte al archivo que lee el tablero en GitHub Pages
+(un corte del mismo día reemplaza al anterior).
 Solo usa la librería estándar (Python 3.9+)."""
 import sys, re, json, os, csv
 from collections import Counter, defaultdict
@@ -25,8 +27,15 @@ def dia(v):
     # Viene en UTC con Z (2026-08-28T02:26:42.184Z); se pasa a hora de Córdoba.
     return datetime.fromisoformat(v.strip().replace('Z', '+00:00')).astimezone(TZ).strftime('%Y-%m-%d')
 
-if len(sys.argv) != 3: sys.exit(__doc__)
-src, out = sys.argv[1], sys.argv[2]
+args = sys.argv[1:]
+acumular = None
+if '--acumular' in args:
+    i = args.index('--acumular')
+    if i + 1 >= len(args): sys.exit(__doc__)
+    acumular = args[i + 1]
+    del args[i:i + 2]
+if len(args) != 2: sys.exit(__doc__)
+src, out = args
 base = os.path.basename(src)
 m = re.search(r'(\d{2})-(\d{2})-(\d{4})[ _](\d{1,2})[._](\d{2})(?:\s*([ap])\.?\s*m)?', base, re.I)
 if not m: sys.exit('No pude leer fecha y hora del nombre del archivo: ' + base)
@@ -65,6 +74,15 @@ if not (sum(t['cantidad'] for t in tipos) == doc['total'] == sum(x['total'] for 
     sys.exit('Los totales no cierran entre tipos, días y filas.')
 with open(out, 'w', encoding='utf-8') as f:
     json.dump(doc, f, ensure_ascii=False, indent=1)
+if acumular:
+    try:
+        with open(acumular, encoding='utf-8') as f: todos = json.load(f).get('reportes', [])
+    except FileNotFoundError:
+        todos = []
+    todos = sorted([r for r in todos if r.get('fecha') != fecha] + [doc], key=lambda r: r['fecha'])
+    with open(acumular, 'w', encoding='utf-8') as f:
+        json.dump({'reportes': todos}, f, ensure_ascii=False, separators=(',', ':'))
+    print(f'{acumular}: {len(todos)} cortes')
 print(json.dumps({k: doc[k] for k in ('fecha', 'hora', 'total', 'pagas', 'sinCargo', 'recaudacion')}, ensure_ascii=False))
 for t in tipos: print(t)
 print(dias[-3:])
