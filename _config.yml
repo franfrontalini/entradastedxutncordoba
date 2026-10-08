@@ -1,0 +1,4 @@
+# GitHub Pages publica desde la raíz: solo se sirve el tablero (docs/) y la redirección (index.html).
+exclude:
+  - README.md
+  - scripts
