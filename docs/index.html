@@ -114,6 +114,15 @@ svg.chart text { font-family: var(--sans); font-size: 11.5px; fill: var(--muted)
 .empty { color: var(--ink-2); padding: 28px 0; text-align: center; max-width: 52ch; margin: 0 auto; }
 .changes { display: flex; flex-wrap: wrap; gap: 4px 12px; }
 td.cambio { min-width: 220px; }
+.p-tools { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
+.p-tools label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--ink-2); min-width: 0; }
+.p-tools select { min-width: 220px; max-width: 100%; }
+input[type="search"] { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--axis); border-radius: 6px; padding: 6px 10px; min-width: 220px; max-width: 100%; }
+input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.p-count { font-size: 13.5px; color: var(--ink-2); margin-left: auto; align-self: center; }
+.privado { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); border: 1px solid var(--axis); border-radius: 4px; padding: 1px 6px; margin-left: 8px; vertical-align: 2px; }
+#t-personas td { white-space: nowrap; }
+#t-personas td.mail { white-space: normal; overflow-wrap: anywhere; min-width: 180px; }
 
 @media (max-width: 860px) {
   .stub { grid-template-columns: 1fr; }
@@ -167,6 +176,21 @@ td.cambio { min-width: 220px; }
         <div class="legend" id="legend-tipos"></div>
       </div>
       <div class="scroll"><table id="t-tipos"></table></div>
+    </section>
+
+    <section class="panel" id="p-personas" hidden>
+      <div class="panel-head">
+        <div>
+          <h2>Asistentes por tipo de entrada<span class="privado">Privado</span></h2>
+          <p class="sub" id="p-sub">Sponsors, UTN e invitaciones. Solo lo ve quien puede editar este tablero.</p>
+        </div>
+      </div>
+      <div class="p-tools">
+        <label for="sel-personas">Tipo de entrada<select id="sel-personas"></select></label>
+        <label for="q-personas">Buscar<input type="search" id="q-personas" placeholder="Nombre, DNI o mail" autocomplete="off"></label>
+        <span class="p-count" id="p-count"></span>
+      </div>
+      <div class="scroll"><table id="t-personas"></table></div>
     </section>
 
     <section class="panel">
@@ -241,7 +265,7 @@ td.cambio { min-width: 220px; }
   function sv(tag, attrs) { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; }
   const sw = (c) => el('span', { class: 'sw', style: 'background:' + c });
 
-  const st = { reportes: [], sel: null, modo: 'dia', dia: null };
+  const st = { reportes: [], sel: null, modo: 'dia', dia: null, personas: [], pSel: null, pQ: '' };
 
   // Normaliza un documento del reporte; lo que no tenga la forma esperada se descarta.
   function limpiar(id, d) {
@@ -428,6 +452,59 @@ td.cambio { min-width: 220px; }
     $('t-reportes').replaceChildren(el('thead', null, head), el('tbody', null, ...rows));
   }
 
+  // Asistentes (colección privada `personas`): un documento por tipo de entrada con el listado del último corte.
+  const plano = (t) => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  function limpiarP(id, d) {
+    if (!d || !Array.isArray(d.personas)) return null;
+    const txt = (v) => (v == null ? '' : String(v)).trim();
+    return {
+      id, entrada: txt(d.entrada) || id, grupo: GI[d.grupo] != null ? d.grupo : 'otros', corte: txt(d.corte),
+      personas: d.personas.map((x) => ({ nombre: txt(x.nombre), apellido: txt(x.apellido), documento: txt(x.documento), email: txt(x.email), telefono: txt(x.telefono), dia: txt(x.dia) })),
+    };
+  }
+  function renderPersonas() {
+    const panel = $('p-personas');
+    if (!st.personas.length) { panel.hidden = true; return; }
+    panel.hidden = false;
+    const grupos = GRUPOS.filter((g) => st.personas.some((p) => p.grupo === g.id));
+    const opts = [];
+    grupos.forEach((g) => {
+      const ls = st.personas.filter((p) => p.grupo === g.id);
+      const og = el('optgroup', { label: g.label });
+      if (ls.length > 1) og.append(el('option', { value: 'g:' + g.id }, 'Todos · ' + g.label + ' (' + num(ls.reduce((a, p) => a + p.personas.length, 0)) + ')'));
+      ls.forEach((p) => og.append(el('option', { value: 'e:' + p.id }, (sub(p.entrada) || p.entrada) + ' (' + num(p.personas.length) + ')')));
+      opts.push(og);
+    });
+    const valido = (v) => v && (v.startsWith('g:') ? grupos.some((g) => 'g:' + g.id === v) : st.personas.some((p) => 'e:' + p.id === v));
+    if (!valido(st.pSel)) st.pSel = grupos[0] && st.personas.filter((p) => p.grupo === grupos[0].id).length > 1 ? 'g:' + grupos[0].id : 'e:' + st.personas[0].id;
+    $('sel-personas').replaceChildren(...opts);
+    $('sel-personas').value = st.pSel;
+    const elegidos = st.pSel.startsWith('g:') ? st.personas.filter((p) => 'g:' + p.grupo === st.pSel) : st.personas.filter((p) => 'e:' + p.id === st.pSel);
+    const varias = elegidos.length > 1;
+    let filas = [];
+    elegidos.forEach((p) => p.personas.forEach((x) => filas.push({ ...x, entrada: sub(p.entrada) || p.entrada })));
+    const total = filas.length;
+    const q = plano(st.pQ.trim());
+    if (q) filas = filas.filter((x) => plano([x.nombre, x.apellido, x.documento, x.email, x.telefono].join(' ')).includes(q));
+    filas.sort((a, b) => plano(a.apellido + ' ' + a.nombre) < plano(b.apellido + ' ' + b.nombre) ? -1 : 1);
+    const cortes = [...new Set(elegidos.map((p) => p.corte).filter(Boolean))];
+    $('p-sub').textContent = 'Sponsors, UTN e invitaciones' + (cortes.length ? ', según el corte del ' + cortes.join(', ') : '') + '. Solo lo ve quien puede editar este tablero.';
+    $('p-count').textContent = q ? num(filas.length) + ' de ' + num(total) + ' personas' : num(total) + (total === 1 ? ' persona' : ' personas');
+    const raya = (v) => v || el('span', { class: 'dim' }, '—');
+    const head = el('tr', null, el('th', null, 'Apellido y nombre'), varias ? el('th', null, 'Entrada') : null, el('th', null, 'DNI'), el('th', null, 'Mail'), el('th', null, 'Teléfono'), el('th', { class: 'hide-sm' }, 'Compra'));
+    const rows = filas.map((x) => el('tr', null,
+      el('td', null, el('strong', null, [x.apellido, x.nombre].filter(Boolean).join(', ') || '—')),
+      varias ? el('td', null, x.entrada) : null,
+      el('td', { class: 'mono' }, raya(x.documento)),
+      el('td', { class: 'mail' }, raya(x.email)),
+      el('td', { class: 'mono' }, raya(x.telefono)),
+      el('td', { class: 'hide-sm dim' }, x.dia ? corta(x.dia) : '—')));
+    if (!rows.length) rows.push(el('tr', null, el('td', { colspan: varias ? 6 : 5, class: 'dim' }, 'Nadie coincide con “' + st.pQ.trim() + '”.')));
+    $('t-personas').replaceChildren(el('thead', null, head), el('tbody', null, ...rows));
+  }
+  $('sel-personas').addEventListener('change', (e) => { st.pSel = e.target.value; renderPersonas(); });
+  $('q-personas').addEventListener('input', (e) => { st.pQ = e.target.value; renderPersonas(); });
+
   function vacio(msg) { $('contenido').hidden = true; $('estado').hidden = false; $('estado-txt').textContent = msg; $('stamp').textContent = 'Sin reportes cargados'; $('filter').hidden = true; }
 
   $('sel-reporte').addEventListener('change', (e) => { st.sel = e.target.value; st.dia = null; render(); });
@@ -447,6 +524,11 @@ td.cambio { min-width: 220px; }
         if (!st.reportes.length) return vacio('Todavía no hay reportes cargados. Pasale a Claude el CSV de entradas habilitadas del día y el consumo aparece acá.');
         render();
       }, () => { if (!st.reportes.length) vacio('No se pudieron leer los reportes. Recargá la página para volver a intentar.'); });
+      // Sin permiso de lectura (o sin datos) el panel de asistentes queda oculto.
+      db.collection('personas').onSnapshot((snap) => {
+        st.personas = snap.docs.map((d) => limpiarP(d.id, d.data())).filter(Boolean).sort((a, b) => GI[a.grupo] - GI[b.grupo] || (a.entrada < b.entrada ? -1 : 1));
+        renderPersonas();
+      }, () => { st.personas = []; renderPersonas(); });
       return;
     }
     try {

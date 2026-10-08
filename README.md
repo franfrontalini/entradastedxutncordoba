@@ -26,6 +26,12 @@ y la variación entre un reporte y el siguiente.
    Hacé commit y push de ese archivo y GitHub Pages se actualiza en uno o dos minutos.
 4. Para el artifact de claude.ai, el mismo resumen se guarda en la colección `reportes` de su base, con la fecha del corte como id.
 
+## Asistentes por tipo de entrada (solo en claude.ai)
+
+El artifact tiene un panel con nombre, apellido, DNI, mail y teléfono de quienes tienen entradas de Sponsors, UTN e Invitaciones.
+Esos datos se generan con `--personas <archivo.json>` y se guardan solo en la colección `personas` de la base privada del artifact,
+que únicamente lee quien puede editar el tablero. Nunca van al repo ni a GitHub Pages; en Pages el panel no aparece.
+
 ## GitHub Pages
 
 Settings → Pages → Build and deployment → Source: *Deploy from a branch*, rama `main`, carpeta `/docs`.
