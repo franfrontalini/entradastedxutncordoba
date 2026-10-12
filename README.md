@@ -30,7 +30,7 @@ y la variación entre un reporte y el siguiente.
 
 El artifact tiene un panel con nombre, apellido, DNI, mail y teléfono de quienes tienen entradas de Sponsors, UTN e Invitaciones.
 Esos datos se generan con `--personas <archivo.json>` y se guardan solo en la colección `personas` de la base privada del artifact,
-que únicamente lee quien puede editar el tablero. Nunca van al repo ni a GitHub Pages; en Pages el panel no aparece.
+que únicamente lee quien puede editar el tablero. Nunca van al repo ni a GitHub Pages. En Pages el panel tiene un botón *Abrir CSV de entradas*: el archivo se lee en el navegador y no se sube a ningún lado.
 
 ## GitHub Pages
 
@@ -49,7 +49,7 @@ Se evalúa en este orden y gana la primera regla que coincide:
 - `SPONSOR - <empresa>` → Sponsors, con una fila por empresa
 - `UTN - <sector>` → UTN, con una fila por sector
 - nombres que contienen `GENERAL` → General
-- nombres que contienen `INVITACI` → Invitaciones
+- nombres que contienen `INVITACI` → Invitaciones, separadas en *Invitados de oradores* (el campo Nombre empieza con `ORADOR` u `ORADORA`) y *Otras invitaciones*
 - cualquier otro nombre → Otros
 
 ## Datos personales

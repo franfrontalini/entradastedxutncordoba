@@ -121,6 +121,13 @@ input[type="search"] { font: inherit; color: var(--ink); background: var(--surfa
 input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .p-count { font-size: 13.5px; color: var(--ink-2); margin-left: auto; align-self: center; }
 .privado { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); border: 1px solid var(--axis); border-radius: 4px; padding: 1px 6px; margin-left: 8px; vertical-align: 2px; }
+.p-abrir { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.p-abrir .sub { margin: 0; max-width: 60ch; }
+.btn { display: inline-block; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--surface); background: var(--ink); border: 1px solid var(--ink); border-radius: 6px; padding: 7px 14px; cursor: pointer; }
+.btn.sec { color: var(--ink); background: var(--surface); border-color: var(--axis); font-weight: 500; }
+.sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); border: 0; }
+.sr:focus-visible + .btn { outline: 2px solid var(--accent); outline-offset: 2px; }
+.p-datos { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 #t-personas td { white-space: nowrap; }
 #t-personas td.mail { white-space: normal; overflow-wrap: anywhere; min-width: 180px; }
 
@@ -185,12 +192,18 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
           <p class="sub" id="p-sub">Sponsors, UTN e invitaciones. Solo lo ve quien puede editar este tablero.</p>
         </div>
       </div>
-      <div class="p-tools">
-        <label for="sel-personas">Tipo de entrada<select id="sel-personas"></select></label>
-        <label for="q-personas">Buscar<input type="search" id="q-personas" placeholder="Nombre, DNI o mail" autocomplete="off"></label>
-        <span class="p-count" id="p-count"></span>
+      <div class="p-abrir" id="p-abrir" hidden>
+        <input type="file" id="f-csv" class="sr" accept=".csv,text/csv"><label class="btn" id="f-csv-btn" for="f-csv">Abrir CSV de entradas</label>
+        <p class="sub" id="p-abrir-txt">Elegí el CSV exportado (tickets_HABILITADAS…). Se lee solo en este navegador: no se sube a ningún lado y desaparece al cerrar la página.</p>
       </div>
-      <div class="scroll"><table id="t-personas"></table></div>
+      <div class="p-datos" id="p-datos" hidden>
+        <div class="p-tools">
+          <label for="sel-personas">Tipo de entrada<select id="sel-personas"></select></label>
+          <label for="q-personas">Buscar<input type="search" id="q-personas" placeholder="Nombre, DNI o mail" autocomplete="off"></label>
+          <span class="p-count" id="p-count"></span>
+        </div>
+        <div class="scroll"><table id="t-personas"></table></div>
+      </div>
     </section>
 
     <section class="panel">
@@ -265,7 +278,7 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
   function sv(tag, attrs) { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; }
   const sw = (c) => el('span', { class: 'sw', style: 'background:' + c });
 
-  const st = { reportes: [], sel: null, modo: 'dia', dia: null, personas: [], pSel: null, pQ: '' };
+  const st = { reportes: [], sel: null, modo: 'dia', dia: null, personas: [], pSel: null, pQ: '', local: false, archivo: '' };
 
   // Normaliza un documento del reporte; lo que no tenga la forma esperada se descarta.
   function limpiar(id, d) {
@@ -464,8 +477,9 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
   }
   function renderPersonas() {
     const panel = $('p-personas');
-    if (!st.personas.length) { panel.hidden = true; return; }
-    panel.hidden = false;
+    $('p-abrir').hidden = !st.local;
+    if (!st.personas.length) { panel.hidden = !st.local; $('p-datos').hidden = true; return; }
+    panel.hidden = false; $('p-datos').hidden = false;
     const grupos = GRUPOS.filter((g) => st.personas.some((p) => p.grupo === g.id));
     const opts = [];
     grupos.forEach((g) => {
@@ -488,7 +502,7 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
     if (q) filas = filas.filter((x) => plano([x.nombre, x.apellido, x.documento, x.email, x.telefono].join(' ')).includes(q));
     filas.sort((a, b) => plano(a.apellido + ' ' + a.nombre) < plano(b.apellido + ' ' + b.nombre) ? -1 : 1);
     const cortes = [...new Set(elegidos.map((p) => p.corte).filter(Boolean))];
-    $('p-sub').textContent = 'Sponsors, UTN e invitaciones' + (cortes.length ? ', según el corte del ' + cortes.join(', ') : '') + '. Solo lo ve quien puede editar este tablero.';
+    $('p-sub').textContent = 'Sponsors, UTN e invitaciones' + (cortes.length ? ', según el corte del ' + cortes.join(', ') : '') + '.' + (st.local ? '' : ' Solo lo ve quien puede editar este tablero.');
     $('p-count').textContent = q ? num(filas.length) + ' de ' + num(total) + ' personas' : num(total) + (total === 1 ? ' persona' : ' personas');
     const raya = (v) => v || el('span', { class: 'dim' }, '—');
     const head = el('tr', null, el('th', null, 'Apellido y nombre'), varias ? el('th', null, 'Entrada') : null, el('th', null, 'DNI'), el('th', null, 'Mail'), el('th', null, 'Teléfono'), el('th', { class: 'hide-sm' }, 'Compra'));
@@ -502,6 +516,66 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
     if (!rows.length) rows.push(el('tr', null, el('td', { colspan: varias ? 6 : 5, class: 'dim' }, 'Nadie coincide con “' + st.pQ.trim() + '”.')));
     $('t-personas').replaceChildren(el('thead', null, head), el('tbody', null, ...rows));
   }
+  // En GitHub Pages los asistentes salen de un CSV que se abre en el navegador; nada se sube. Misma clasificación que procesar_reporte.py.
+  function csvParse(t) {
+    t = t.replace(/^\uFEFF/, '');
+    const rows = []; let row = [], f = '', q = false;
+    for (let i = 0; i < t.length; i++) {
+      const c = t[i];
+      if (q) { if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+      else if (c === '"') q = true;
+      else if (c === ',') { row.push(f); f = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; }
+      else f += c;
+    }
+    if (f !== '' || row.length) { row.push(f); rows.push(row); }
+    const h = (rows.shift() || []).map((k) => k.trim());
+    return rows.filter((r) => r.some((v) => v.trim())).map((r) => Object.fromEntries(h.map((k, i) => [k, r[i] || ''])));
+  }
+  function grupoDe(nombre) {
+    const n = nombre.toUpperCase().trim();
+    if (n.startsWith('PRE VENTA') || n.startsWith('PREVENTA')) return 'preventa';
+    if (n.startsWith('SPONSOR')) return 'sponsor';
+    if (n.startsWith('UTN')) return 'utn';
+    if (n.includes('GENERAL')) return 'general';
+    if (n.includes('INVITACI')) return 'invitacion';
+    return 'otros';
+  }
+  const ORADOR = /^\s*ORADOR(A|ES|AS)?\b/i;
+  function entradaDe(r) {
+    const e = (r['Entrada'] || '').trim();
+    return grupoDe(e) === 'invitacion' ? e + ' - ' + (ORADOR.test(r['Nombre'] || '') ? 'Invitados de oradores' : 'Otras invitaciones') : e;
+  }
+  const diaCba = (v) => { const d = new Date(String(v).trim()); return isNaN(d) ? '' : d.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Cordoba' }); };
+  function desdeCSV(archivo, texto) {
+    const filas = csvParse(texto);
+    if (!filas.length || !('Entrada' in filas[0]) || !('Nombre' in filas[0])) throw new Error('no tiene las columnas del export de entradas (Entrada, Nombre, Apellido…)');
+    const m = archivo.match(/(\d{2})-(\d{2})-(\d{4})[ _](\d{1,2})[._](\d{2})/);
+    const corte = m ? m[1] + '/' + m[2] + ' ' + String(+m[4]).padStart(2, '0') + ':' + m[5] : '';
+    const listas = {};
+    filas.forEach((r) => {
+      const e = entradaDe(r);
+      if (!['sponsor', 'utn', 'invitacion'].includes(grupoDe(e))) return;
+      const t = (k) => (r[k] || '').trim();
+      (listas[e] = listas[e] || []).push({ nombre: t('Nombre'), apellido: t('Apellido'), documento: t('Documento'), email: t('Email'), telefono: t('Teléfono'), dia: diaCba(r['Fecha de compra']) });
+    });
+    return Object.entries(listas).map(([e, ps]) => ({ id: plano(e).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), entrada: e, grupo: grupoDe(e), corte, personas: ps }))
+      .sort((a, b) => GI[a.grupo] - GI[b.grupo] || (a.entrada < b.entrada ? -1 : 1));
+  }
+  $('f-csv').addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    try {
+      st.personas = desdeCSV(f.name, await f.text()); st.archivo = f.name; st.pSel = null;
+      $('p-abrir-txt').textContent = 'Leído de “' + f.name + '” en este navegador. No se sube a ningún lado y desaparece al cerrar la página.';
+      $('f-csv-btn').textContent = 'Abrir otro CSV'; $('f-csv-btn').classList.add('sec');
+    } catch (err) {
+      st.personas = [];
+      $('p-abrir-txt').textContent = 'No pude leer “' + f.name + '”: ' + err.message + '. Elegí el CSV exportado de entradas habilitadas.';
+    }
+    renderPersonas();
+  });
   $('sel-personas').addEventListener('change', (e) => { st.pSel = e.target.value; renderPersonas(); });
   $('q-personas').addEventListener('input', (e) => { st.pQ = e.target.value; renderPersonas(); });
 
@@ -537,7 +611,9 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
       const j = await res.json();
       st.reportes = (Array.isArray(j.reportes) ? j.reportes : []).map((d) => limpiar(String(d.fecha), d)).filter(Boolean).sort((a, b) => a.id < b.id ? -1 : 1);
       if (!st.reportes.length) return vacio('Todavía no hay reportes cargados.');
+      st.local = true;
       render();
+      renderPersonas();
     } catch (e) {
       vacio('No se pudieron leer los reportes. Recargá la página para volver a intentar.');
     }

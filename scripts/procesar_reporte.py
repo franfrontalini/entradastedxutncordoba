@@ -22,6 +22,15 @@ def grupo(nombre):
     if 'INVITACI' in n: return 'invitacion'
     return 'otros'
 
+# Los invitados de oradores vienen con el nombre cargado como "ORADOR …" u "ORADORA …".
+ORADOR = re.compile(r'\s*ORADOR(A|ES|AS)?\b', re.I)
+
+def entrada_de(r):
+    e = r['Entrada'].strip()
+    if grupo(e) == 'invitacion':
+        e += ' - ' + ('Invitados de oradores' if ORADOR.match(r.get('Nombre') or '') else 'Otras invitaciones')
+    return e
+
 def precio(v):
     try: return float(v)
     except (TypeError, ValueError): return 0.0
@@ -55,7 +64,7 @@ fecha, hora = f'{y}-{mo}-{d}', f'{h:02d}:{mi}'
 
 with open(src, encoding='utf-8-sig', newline='') as f:
     crudas = list(csv.DictReader(f))
-filas = [{'entrada': r['Entrada'].strip(), 'precio': precio(r['Precio']), 'dia': dia(r['Fecha de compra'])} for r in crudas]
+filas = [{'entrada': entrada_de(r), 'precio': precio(r['Precio']), 'dia': dia(r['Fecha de compra'])} for r in crudas]
 
 por_tipo = defaultdict(list)
 por_dia = defaultdict(Counter)
@@ -96,7 +105,7 @@ if personas:
     campo = lambda r, k: (r.get(k) or '').strip()
     listas = defaultdict(list)
     for r in crudas:
-        e = r['Entrada'].strip()
+        e = entrada_de(r)
         if grupo(e) in GRUPOS_CON_NOMBRES:
             listas[e].append({'nombre': campo(r, 'Nombre'), 'apellido': campo(r, 'Apellido'), 'documento': campo(r, 'Documento'),
                               'email': campo(r, 'Email'), 'telefono': campo(r, 'Teléfono'), 'dia': dia(r['Fecha de compra'])})
