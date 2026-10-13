@@ -136,6 +136,9 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
 .sr:focus-visible + .btn { outline: 2px solid var(--accent); outline-offset: 2px; }
 .p-datos { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 #t-personas td { white-space: nowrap; }
+#t-personas tr.pend td { color: var(--muted); }
+.chip { display: inline-block; font-size: 12px; font-weight: 500; color: var(--ink-2); border: 1px dashed var(--axis); border-radius: 999px; padding: 0 8px; }
+.pend-n { font-weight: 400; color: var(--muted); font-size: 13px; }
 #t-personas td.mail { white-space: normal; overflow-wrap: anywhere; min-width: 180px; }
 
 @media (max-width: 860px) {
@@ -290,7 +293,7 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
   function sv(tag, attrs) { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; }
   const sw = (c) => el('span', { class: 'sw', style: 'background:' + c });
 
-  const st = { reportes: [], sel: null, modo: 'dia', dia: null, personas: [], pSel: null, pQ: '', local: false, fuente: null };
+  const st = { reportes: [], sel: null, modo: 'dia', dia: null, personas: [], pSel: null, pQ: '', local: false, fuente: null, comunidad: [] };
 
   // Normaliza un documento del reporte; lo que no tenga la forma esperada se descarta.
   function limpiar(id, d) {
@@ -309,6 +312,7 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
     return {
       id, fecha: /^\d{4}-\d{2}-\d{2}$/.test(d.fecha) ? d.fecha : id, hora: String(d.hora || ''),
       total: +d.total || 0, pagas: +d.pagas || 0, sinCargo: +d.sinCargo || 0, recaudacion: +d.recaudacion || 0, tipos, dias,
+      pendientes: d.pendientes && typeof d.pendientes === 'object' ? Object.fromEntries(Object.entries(d.pendientes).map(([k, v]) => [String(k), +v || 0])) : {},
     };
   }
 
@@ -378,7 +382,8 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
       if (!b.comp) { b.ts.forEach((t) => rows.push(fila(c, t.nombre, t.cantidad, prevT ? t.cantidad - (prevT[t.nombre] || 0) : 0, t.precio, t.recaudacion, ''))); return; }
       const n = b.ts.length, unidad = b.g.id === 'sponsor' ? (n === 1 ? 'empresa' : 'empresas') : b.g.id === 'utn' ? (n === 1 ? 'sector' : 'sectores') : (n === 1 ? 'tipo' : 'tipos');
       rows.push(fila(c, el('span', null, b.g.label, el('span', { class: 'cuenta' }, ' · ' + n + ' ' + unidad)), b.cantidad, b.cantidad - b.prevG, null, b.recaudacion, 'padre'));
-      b.ts.forEach((t) => rows.push(fila(c, sub(t.nombre) || t.nombre, t.cantidad, prevT ? t.cantidad - (prevT[t.nombre] || 0) : 0, t.precio, t.recaudacion, 'hijo')));
+      const pend = (t) => r.pendientes[t.nombre] ? el('span', null, sub(t.nombre) || t.nombre, el('span', { class: 'pend-n' }, ' · ' + num(r.pendientes[t.nombre]) + (r.pendientes[t.nombre] === 1 ? ' pendiente' : ' pendientes'))) : (sub(t.nombre) || t.nombre);
+      b.ts.forEach((t) => rows.push(fila(c, pend(t), t.cantidad, prevT ? t.cantidad - (prevT[t.nombre] || 0) : 0, t.precio, t.recaudacion, 'hijo')));
     });
     const foot = el('tr', null, el('td', null, 'Total'), el('td', { class: 'hide-sm' }, ''), el('td', { class: 'num' }, num(r.total)),
       p ? el('td', { class: 'num' }, signo(r.total - p.total) || '0') : null, el('td', { class: 'num' }, '100%'), el('td', { class: 'hide-sm' }, ''), el('td', { class: 'num' }, money(r.recaudacion)));
@@ -485,6 +490,8 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
     return {
       id, entrada: txt(d.entrada) || id, grupo: GI[d.grupo] != null ? d.grupo : 'otros', corte: txt(d.corte),
       personas: d.personas.map((x) => ({ nombre: txt(x.nombre), apellido: txt(x.apellido), documento: txt(x.documento), email: txt(x.email), telefono: txt(x.telefono), dia: txt(x.dia) })),
+      pendientes: (Array.isArray(d.pendientes) ? d.pendientes : []).map((x) => ({ nombre: txt(x.nombre), apellido: txt(x.apellido), documento: '', email: txt(x.email), telefono: '', dia: '', pendiente: true })),
+      nPend: Array.isArray(d.pendientes) ? d.pendientes.length : (+d.nPend || 0),
     };
   }
   function renderPersonas() {
@@ -499,7 +506,7 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
       const ls = st.personas.filter((p) => p.grupo === g.id);
       const og = el('optgroup', { label: g.label });
       if (ls.length > 1) og.append(el('option', { value: 'g:' + g.id }, 'Todos · ' + g.label + ' (' + num(ls.reduce((a, p) => a + p.personas.length, 0)) + ')'));
-      ls.forEach((p) => og.append(el('option', { value: 'e:' + p.id }, (sub(p.entrada) || p.entrada) + ' (' + num(p.personas.length) + ')')));
+      ls.forEach((p) => og.append(el('option', { value: 'e:' + p.id }, (sub(p.entrada) || p.entrada) + ' (' + num(p.personas.length) + (p.nPend ? ' · ' + num(p.nPend) + ' pend.' : '') + ')')));
       opts.push(og);
     });
     const valido = (v) => v && (v.startsWith('g:') ? grupos.some((g) => 'g:' + g.id === v) : st.personas.some((p) => 'e:' + p.id === v));
@@ -514,23 +521,25 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
     const elegidos = st.pSel.startsWith('g:') ? st.personas.filter((p) => 'g:' + p.grupo === st.pSel) : st.personas.filter((p) => 'e:' + p.id === st.pSel);
     const varias = elegidos.length > 1;
     let filas = [];
-    elegidos.forEach((p) => p.personas.forEach((x) => filas.push({ ...x, entrada: sub(p.entrada) || p.entrada })));
-    const total = filas.length;
+    elegidos.forEach((p) => p.personas.concat(p.pendientes).forEach((x) => filas.push({ ...x, entrada: sub(p.entrada) || p.entrada })));
+    const nPend = elegidos.reduce((a, p) => a + p.nPend, 0);
+    const total = filas.filter((x) => !x.pendiente).length;
     const q = plano(st.pQ.trim());
     if (q) filas = filas.filter((x) => plano([x.nombre, x.apellido, x.documento, x.email, x.telefono].join(' ')).includes(q));
-    filas.sort((a, b) => plano(a.apellido + ' ' + a.nombre) < plano(b.apellido + ' ' + b.nombre) ? -1 : 1);
+    filas.sort((a, b) => (a.pendiente ? 1 : 0) - (b.pendiente ? 1 : 0) || (plano(a.apellido + ' ' + a.nombre) < plano(b.apellido + ' ' + b.nombre) ? -1 : 1));
     const cortes = [...new Set(elegidos.map((p) => p.corte).filter(Boolean))];
     $('p-sub').textContent = 'Todas las entradas' + (cortes.length ? ', según el corte del ' + cortes.join(', ') : '') + '.' + (st.local ? '' : ' Solo lo ve quien puede editar este tablero.');
-    $('p-count').textContent = q ? num(filas.length) + ' de ' + num(total) + ' personas' : num(total) + (total === 1 ? ' persona' : ' personas');
+    const conEntrada = filas.filter((x) => !x.pendiente).length;
+    $('p-count').textContent = (q ? num(conEntrada) + ' de ' + num(total) + ' personas' : num(total) + (total === 1 ? ' persona' : ' personas')) + (nPend ? ' · ' + num(nPend) + (nPend === 1 ? ' pendiente' : ' pendientes') : '');
     const raya = (v) => v || el('span', { class: 'dim' }, '—');
     const head = el('tr', null, el('th', null, 'Apellido y nombre'), varias ? el('th', null, 'Entrada') : null, el('th', null, 'DNI'), el('th', null, 'Mail'), el('th', null, 'Teléfono'), el('th', { class: 'hide-sm' }, 'Compra'));
-    const rows = filas.map((x) => el('tr', null,
+    const rows = filas.map((x) => el('tr', x.pendiente ? { class: 'pend' } : null,
       el('td', null, el('strong', null, [x.apellido, x.nombre].filter(Boolean).join(', ') || '—')),
       varias ? el('td', null, x.entrada) : null,
       el('td', { class: 'mono' }, raya(x.documento)),
       el('td', { class: 'mail' }, raya(x.email)),
       el('td', { class: 'mono' }, raya(x.telefono)),
-      el('td', { class: 'hide-sm dim' }, x.dia ? corta(x.dia) : '—')));
+      el('td', { class: 'hide-sm dim' }, x.pendiente ? el('span', { class: 'chip' }, 'Pendiente') : x.dia ? corta(x.dia) : '—')));
     if (!rows.length) rows.push(el('tr', null, el('td', { colspan: varias ? 6 : 5, class: 'dim' }, 'Nadie coincide con “' + st.pQ.trim() + '”.')));
     $('t-personas').replaceChildren(el('thead', null, head), el('tbody', null, ...rows));
   }
@@ -560,23 +569,34 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
     return 'otros';
   }
   const ORADOR = /^\s*(ORADOR|CONDUCTOR)(A|ES|AS)?\b/i, CORO = /^\s*COROS?\b/i;
-  function entradaDe(r) {
+  // Comunidad TEDx: reportes.json trae solo hashes SHA-256 del mail y del nombre de cada integrante, no la lista.
+  const clave = (n, a) => plano(n + ' ' + a).replace(/[^\x00-\x7f]/g, '').replace(/\s+/g, ' ').trim();
+  const sha = async (t) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)))].map((b) => b.toString(16).padStart(2, '0')).join('');
+  function entradaDe(r, com) {
     const e = (r['Entrada'] || '').trim(), n = r['Nombre'] || '';
-    return grupoDe(e) === 'invitacion' ? e + ' - ' + (ORADOR.test(n) ? 'Invitados de oradores' : CORO.test(n) ? 'Coro' : 'Otras invitaciones') : e;
+    return grupoDe(e) === 'invitacion' ? e + ' - ' + (com ? 'Comunidad TEDx' : ORADOR.test(n) ? 'Invitados de oradores' : CORO.test(n) ? 'Coro' : 'Otras invitaciones') : e;
   }
   const diaCba = (v) => { const d = new Date(String(v).trim()); return isNaN(d) ? '' : d.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Cordoba' }); };
-  function desdeCSV(archivo, texto) {
+  async function desdeCSV(archivo, texto) {
     const filas = csvParse(texto);
     if (!filas.length || !('Entrada' in filas[0]) || !('Nombre' in filas[0])) throw new Error('no tiene las columnas del export de entradas (Entrada, Nombre, Apellido…)');
     const m = archivo.match(/(\d{2})-(\d{2})-(\d{4})[ _](\d{1,2})[._](\d{2})/);
     const corte = m ? m[1] + '/' + m[2] + ' ' + String(+m[4]).padStart(2, '0') + ':' + m[5] : '';
     const listas = {};
+    const hm = new Set(st.comunidad.map((c) => c.e)), hn = new Set(st.comunidad.map((c) => c.n)), vistos = new Set();
+    for (const r of filas) {
+      const he = await sha((r['Email'] || '').trim().toLowerCase()), hk = await sha(clave(r['Nombre'] || '', r['Apellido'] || ''));
+      vistos.add(he); vistos.add(hk);
+      r._com = hm.has(he) || hn.has(hk);
+    }
+    if (st.comunidad.length) listas['INVITACIONES ESPECIALES - Comunidad TEDx'] = [];
     filas.forEach((r) => {
-      const e = entradaDe(r);
+      const e = entradaDe(r, r._com);
       const t = (k) => (r[k] || '').trim();
       (listas[e] = listas[e] || []).push({ nombre: t('Nombre'), apellido: t('Apellido'), documento: t('Documento'), email: t('Email'), telefono: t('Teléfono'), dia: diaCba(r['Fecha de compra']) });
     });
-    return Object.entries(listas).map(([e, ps]) => ({ id: plano(e).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), entrada: e, grupo: grupoDe(e), corte, personas: ps }))
+    const nPend = st.comunidad.filter((c) => !vistos.has(c.e) && !vistos.has(c.n)).length;
+    return Object.entries(listas).map(([e, ps]) => ({ id: plano(e).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), entrada: e, grupo: grupoDe(e), corte, personas: ps, pendientes: [], nPend: e.endsWith(' - Comunidad TEDx') ? nPend : 0 }))
       .sort((a, b) => GI[a.grupo] - GI[b.grupo] || (a.entrada < b.entrada ? -1 : 1));
   }
   $('f-csv').addEventListener('change', async (e) => {
@@ -584,7 +604,7 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
     e.target.value = '';
     if (!f) return;
     try {
-      st.personas = desdeCSV(f.name, await f.text()); st.fuente = 'csv'; st.pSel = null;
+      st.personas = await desdeCSV(f.name, await f.text()); st.fuente = 'csv'; st.pSel = null;
       $('p-abrir-txt').textContent = 'Leído de “' + f.name + '” en este navegador. No se sube a ningún lado y desaparece al cerrar la página.';
       $('f-csv-btn').textContent = 'Abrir otro CSV'; $('f-csv-btn').classList.add('sec');
     } catch (err) {
@@ -657,6 +677,7 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
       if (!res.ok) throw new Error(res.status);
       const j = await res.json();
       st.reportes = (Array.isArray(j.reportes) ? j.reportes : []).map((d) => limpiar(String(d.fecha), d)).filter(Boolean).sort((a, b) => a.id < b.id ? -1 : 1);
+      st.comunidad = (Array.isArray(j.comunidad) ? j.comunidad : []).filter((c) => c && typeof c.e === 'string' && typeof c.n === 'string');
       if (!st.reportes.length) return vacio('Todavía no hay reportes cargados.');
       st.local = true;
       render();
