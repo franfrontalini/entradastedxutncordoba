@@ -27,28 +27,45 @@ def grupo(nombre):
 ORADOR = re.compile(r'\s*(ORADOR|CONDUCTOR)(A|ES|AS)?\b', re.I)
 CORO = re.compile(r'\s*COROS?\b', re.I)
 
-# Comunidad TEDx: lista fija de invitados (datos/comunidad_tedx.tsv, fuera del repo). Se reconocen por mail o por
-# nombre y apellido; quienes todavía no tienen entrada quedan como pendientes.
+# Listas fijas de invitados (en datos/, fuera del repo). Una invitación cuyo mail o nombre y apellido (en cualquier
+# orden) figura en una lista va a esa categoría. Con pendientes=True se cuenta quiénes de la lista no tienen entrada.
 INVITACIONES = 'INVITACIONES ESPECIALES'
-COMUNIDAD = 'Comunidad TEDx'
+LISTAS = [
+    {'nombre': 'Comunidad TEDx', 'archivo': 'comunidad_tedx.tsv', 'pendientes': True},
+    {'nombre': 'Equipo interno', 'archivo': 'equipo_interno.tsv', 'pendientes': False},
+]
 
 def clave(nombre, apellido):
     t = unicodedata.normalize('NFKD', f'{nombre} {apellido}').encode('ascii', 'ignore').decode().lower()
     return re.sub(r'\s+', ' ', t).strip()
 
-def leer_comunidad():
-    ruta = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'datos', 'comunidad_tedx.tsv')
-    if not os.path.exists(ruta): return []
-    with open(ruta, encoding='utf-8', newline='') as f:
-        return [{'nombre': (r.get('nombre') or '').strip(), 'apellido': (r.get('apellido') or '').strip(), 'email': (r.get('email') or '').strip()}
-                for r in csv.DictReader(f, delimiter='\t') if (r.get('email') or r.get('nombre'))]
+def mail(t):
+    t = (t or '').strip().lower()
+    return t[:-4] + '.com' if t.endswith('.con') else t
 
-COMUNIDAD_LISTA = leer_comunidad()
-COM_MAILS = {p['email'].lower() for p in COMUNIDAD_LISTA if p['email']}
-COM_CLAVES = {clave(p['nombre'], p['apellido']) for p in COMUNIDAD_LISTA}
+def claves(nombre, apellido):
+    return {clave(nombre, apellido), clave(apellido, nombre)} if clave(nombre, apellido) else set()
 
-def es_comunidad(r):
-    return (r.get('Email') or '').strip().lower() in COM_MAILS or clave(r.get('Nombre') or '', r.get('Apellido') or '') in COM_CLAVES
+def leer_listas():
+    base = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'datos')
+    for L in LISTAS:
+        L['miembros'] = []
+        ruta = os.path.join(base, L['archivo'])
+        if os.path.exists(ruta):
+            with open(ruta, encoding='utf-8', newline='') as f:
+                L['miembros'] = [{'nombre': (r.get('nombre') or '').strip(), 'apellido': (r.get('apellido') or '').strip(), 'email': (r.get('email') or '').strip()}
+                                 for r in csv.DictReader(f, delimiter='\t') if (r.get('email') or '').strip() or (r.get('nombre') or '').strip()]
+        L['mails'] = {mail(m['email']) for m in L['miembros'] if m['email']}
+        L['claves'] = set().union(*(claves(m['nombre'], m['apellido']) for m in L['miembros']))
+    return [L for L in LISTAS if L['miembros']]
+
+LISTAS_ACTIVAS = leer_listas()
+
+def lista_de(r):
+    m, k = mail(r.get('Email')), clave(r.get('Nombre') or '', r.get('Apellido') or '')
+    for L in LISTAS_ACTIVAS:
+        if (m and m in L['mails']) or (k and k in L['claves']): return L['nombre']
+    return None
 
 def invitacion(nombre):
     if ORADOR.match(nombre): return 'Invitados de oradores'
@@ -58,7 +75,7 @@ def invitacion(nombre):
 def entrada_de(r):
     e = r['Entrada'].strip()
     if grupo(e) == 'invitacion':
-        e += ' - ' + (COMUNIDAD if es_comunidad(r) else invitacion(r.get('Nombre') or ''))
+        e += ' - ' + (lista_de(r) or invitacion(r.get('Nombre') or ''))
     return e
 
 def precio(v):
@@ -107,12 +124,16 @@ for nombre, ps in por_tipo.items():
     moda = min(Counter(ps).most_common(), key=lambda kv: (-kv[1], kv[0]))[0]
     tipos.append({'nombre': nombre, 'grupo': grupo(nombre), 'cantidad': len(ps),
                   'precio': int(moda), 'recaudacion': int(sum(ps))})
-# Pendientes de Comunidad TEDx: integrantes de la lista sin entrada en este corte.
-com_tipo = f'{INVITACIONES} - {COMUNIDAD}'
-presentes = {(r.get('Email') or '').strip().lower() for r in crudas} | {clave(r.get('Nombre') or '', r.get('Apellido') or '') for r in crudas}
-com_pendientes = [p for p in COMUNIDAD_LISTA if p['email'].lower() not in presentes and clave(p['nombre'], p['apellido']) not in presentes]
-if COMUNIDAD_LISTA and not any(t['nombre'] == com_tipo for t in tipos):
-    tipos.append({'nombre': com_tipo, 'grupo': 'invitacion', 'cantidad': 0, 'precio': 0, 'recaudacion': 0})
+# Pendientes: integrantes de una lista con pendientes=True que no tienen entrada en este corte.
+p_mails = {mail(r.get('Email')) for r in crudas}
+p_claves = {clave(r.get('Nombre') or '', r.get('Apellido') or '') for r in crudas}
+pendientes = {}
+for L in LISTAS_ACTIVAS:
+    if not L['pendientes']: continue
+    t = f"{INVITACIONES} - {L['nombre']}"
+    pendientes[t] = [m for m in L['miembros'] if not (m['email'] and mail(m['email']) in p_mails) and not (claves(m['nombre'], m['apellido']) & p_claves)]
+    if not any(x['nombre'] == t for x in tipos):
+        tipos.append({'nombre': t, 'grupo': 'invitacion', 'cantidad': 0, 'precio': 0, 'recaudacion': 0})
 tipos.sort(key=lambda t: (-t['cantidad'], t['nombre']))
 
 dias = [{'dia': k, 'total': sum(c.values()),
@@ -122,7 +143,7 @@ dias = [{'dia': k, 'total': sum(c.values()),
 doc = {'fecha': fecha, 'hora': hora, 'archivo': base, 'total': len(filas),
        'pagas': sum(r['precio'] > 0 for r in filas), 'sinCargo': sum(r['precio'] <= 0 for r in filas),
        'recaudacion': int(sum(r['precio'] for r in filas)), 'tipos': tipos, 'dias': dias}
-if COMUNIDAD_LISTA: doc['pendientes'] = {com_tipo: len(com_pendientes)}
+if pendientes: doc['pendientes'] = {t: len(ps) for t, ps in pendientes.items()}
 if not (sum(t['cantidad'] for t in tipos) == doc['total'] == sum(x['total'] for x in dias)):
     sys.exit('Los totales no cierran entre tipos, días y filas.')
 with open(out, 'w', encoding='utf-8') as f:
@@ -135,9 +156,11 @@ if acumular:
     todos = sorted([r for r in todos if r.get('fecha') != fecha] + [doc], key=lambda r: r['fecha'])
     # Para clasificar un CSV abierto en la página sin publicar la lista: solo hashes de mail y de nombre.
     h = lambda t: hashlib.sha256(t.encode()).hexdigest()
-    comunidad = [{'e': h(p['email'].lower()), 'n': h(clave(p['nombre'], p['apellido']))} for p in COMUNIDAD_LISTA]
+    listas_pub = [{'nombre': L['nombre'], 'pendientes': L['pendientes'],
+                   'miembros': [{'e': h(mail(m['email'])) if m['email'] else '', 'n': sorted(h(k) for k in claves(m['nombre'], m['apellido']))} for m in L['miembros']]}
+                  for L in LISTAS_ACTIVAS]
     with open(acumular, 'w', encoding='utf-8') as f:
-        json.dump({'reportes': todos, 'comunidad': comunidad}, f, ensure_ascii=False, separators=(',', ':'))
+        json.dump({'reportes': todos, 'listas': listas_pub}, f, ensure_ascii=False, separators=(',', ':'))
     print(f'{acumular}: {len(todos)} cortes')
 if personas:
     # Una entrada por documento de la colección `personas`, con id derivado del nombre de la entrada.
@@ -151,12 +174,12 @@ if personas:
         import unicodedata
         t = unicodedata.normalize('NFKD', t).encode('ascii', 'ignore').decode().lower()
         return re.sub(r'[^a-z0-9]+', '-', t).strip('-')
-    if COMUNIDAD_LISTA: listas.setdefault(com_tipo, [])
+    for t in pendientes: listas.setdefault(t, [])
     salida = [{'id': slug(e), 'entrada': e, 'grupo': grupo(e), 'corte': fecha + ' ' + hora,
                'personas': sorted(ps, key=lambda x: (x['apellido'].lower(), x['nombre'].lower()))}
               for e, ps in sorted(listas.items())]
     for x in salida:
-        if x['entrada'] == com_tipo: x['pendientes'] = com_pendientes
+        if x['entrada'] in pendientes: x['pendientes'] = pendientes[x['entrada']]
     with open(personas, 'w', encoding='utf-8') as f:
         json.dump(salida, f, ensure_ascii=False, indent=1)
     print(f'{personas}: ' + ', '.join(f"{x['entrada']} ({len(x['personas'])})" for x in salida))

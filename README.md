@@ -59,7 +59,7 @@ Se evalúa en este orden y gana la primera regla que coincide:
 - `SPONSOR - <empresa>` → Sponsors, con una fila por empresa
 - `UTN - <sector>` → UTN, con una fila por sector
 - nombres que contienen `GENERAL` → General
-- nombres que contienen `INVITACI` → Invitaciones, separadas según cómo empieza el campo Nombre: *Invitados de oradores* (`ORADOR`, `ORADORA`, `CONDUCTOR`, `CONDUCTORA`), *Coro* (`CORO`), *Comunidad TEDx* (lista en `datos/comunidad_tedx.tsv`, fuera del repo; quienes aún no tienen entrada se cuentan como pendientes) y *Otras invitaciones*
+- nombres que contienen `INVITACI` → Invitaciones, separadas según cómo empieza el campo Nombre: *Invitados de oradores* (`ORADOR`, `ORADORA`, `CONDUCTOR`, `CONDUCTORA`), *Coro* (`CORO`), *Comunidad TEDx* y *Equipo interno* (listas en `datos/comunidad_tedx.tsv` y `datos/equipo_interno.tsv`, fuera del repo; se reconocen por mail o por nombre y apellido; en Comunidad TEDx se cuentan como pendientes quienes aún no tienen entrada) y *Otras invitaciones*
 - cualquier otro nombre → Otros
 
 ## Datos personales

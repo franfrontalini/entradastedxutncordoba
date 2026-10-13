@@ -293,7 +293,7 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
   function sv(tag, attrs) { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; }
   const sw = (c) => el('span', { class: 'sw', style: 'background:' + c });
 
-  const st = { reportes: [], sel: null, modo: 'dia', dia: null, personas: [], pSel: null, pQ: '', local: false, fuente: null, comunidad: [] };
+  const st = { reportes: [], sel: null, modo: 'dia', dia: null, personas: [], pSel: null, pQ: '', local: false, fuente: null, listas: [] };
 
   // Normaliza un documento del reporte; lo que no tenga la forma esperada se descarta.
   function limpiar(id, d) {
@@ -569,12 +569,14 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
     return 'otros';
   }
   const ORADOR = /^\s*(ORADOR|CONDUCTOR)(A|ES|AS)?\b/i, CORO = /^\s*COROS?\b/i;
-  // Comunidad TEDx: reportes.json trae solo hashes SHA-256 del mail y del nombre de cada integrante, no la lista.
+  // Listas fijas (Comunidad TEDx, Equipo interno): reportes.json trae solo hashes SHA-256 del mail y del nombre de cada
+  // integrante, no las listas. Misma normalización que procesar_reporte.py.
   const clave = (n, a) => plano(n + ' ' + a).replace(/[^\x00-\x7f]/g, '').replace(/\s+/g, ' ').trim();
+  const mailN = (t) => { t = String(t || '').trim().toLowerCase(); return t.endsWith('.con') ? t.slice(0, -4) + '.com' : t; };
   const sha = async (t) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)))].map((b) => b.toString(16).padStart(2, '0')).join('');
-  function entradaDe(r, com) {
+  function entradaDe(r, lista) {
     const e = (r['Entrada'] || '').trim(), n = r['Nombre'] || '';
-    return grupoDe(e) === 'invitacion' ? e + ' - ' + (com ? 'Comunidad TEDx' : ORADOR.test(n) ? 'Invitados de oradores' : CORO.test(n) ? 'Coro' : 'Otras invitaciones') : e;
+    return grupoDe(e) === 'invitacion' ? e + ' - ' + (lista || (ORADOR.test(n) ? 'Invitados de oradores' : CORO.test(n) ? 'Coro' : 'Otras invitaciones')) : e;
   }
   const diaCba = (v) => { const d = new Date(String(v).trim()); return isNaN(d) ? '' : d.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Cordoba' }); };
   async function desdeCSV(archivo, texto) {
@@ -583,20 +585,23 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
     const m = archivo.match(/(\d{2})-(\d{2})-(\d{4})[ _](\d{1,2})[._](\d{2})/);
     const corte = m ? m[1] + '/' + m[2] + ' ' + String(+m[4]).padStart(2, '0') + ':' + m[5] : '';
     const listas = {};
-    const hm = new Set(st.comunidad.map((c) => c.e)), hn = new Set(st.comunidad.map((c) => c.n)), vistos = new Set();
+    const ls = st.listas.map((L) => ({ ...L, mails: new Set(L.miembros.map((m) => m.e).filter(Boolean)), claves: new Set(L.miembros.flatMap((m) => m.n)) }));
+    const vistos = new Set();
     for (const r of filas) {
-      const he = await sha((r['Email'] || '').trim().toLowerCase()), hk = await sha(clave(r['Nombre'] || '', r['Apellido'] || ''));
-      vistos.add(he); vistos.add(hk);
-      r._com = hm.has(he) || hn.has(hk);
+      const m = mailN(r['Email']), k = clave(r['Nombre'] || '', r['Apellido'] || '');
+      const he = m ? await sha(m) : '', hk = k ? await sha(k) : '';
+      if (he) vistos.add(he); if (hk) vistos.add(hk);
+      const L = ls.find((L) => (he && L.mails.has(he)) || (hk && L.claves.has(hk)));
+      r._lista = L ? L.nombre : null;
     }
-    if (st.comunidad.length) listas['INVITACIONES ESPECIALES - Comunidad TEDx'] = [];
+    ls.filter((L) => L.pendientes).forEach((L) => { listas['INVITACIONES ESPECIALES - ' + L.nombre] = []; });
     filas.forEach((r) => {
-      const e = entradaDe(r, r._com);
+      const e = entradaDe(r, r._lista);
       const t = (k) => (r[k] || '').trim();
       (listas[e] = listas[e] || []).push({ nombre: t('Nombre'), apellido: t('Apellido'), documento: t('Documento'), email: t('Email'), telefono: t('Teléfono'), dia: diaCba(r['Fecha de compra']) });
     });
-    const nPend = st.comunidad.filter((c) => !vistos.has(c.e) && !vistos.has(c.n)).length;
-    return Object.entries(listas).map(([e, ps]) => ({ id: plano(e).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), entrada: e, grupo: grupoDe(e), corte, personas: ps, pendientes: [], nPend: e.endsWith(' - Comunidad TEDx') ? nPend : 0 }))
+    const nPend = Object.fromEntries(ls.filter((L) => L.pendientes).map((L) => ['INVITACIONES ESPECIALES - ' + L.nombre, L.miembros.filter((m) => !(m.e && vistos.has(m.e)) && !m.n.some((h) => vistos.has(h))).length]));
+    return Object.entries(listas).map(([e, ps]) => ({ id: plano(e).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), entrada: e, grupo: grupoDe(e), corte, personas: ps, pendientes: [], nPend: nPend[e] || 0 }))
       .sort((a, b) => GI[a.grupo] - GI[b.grupo] || (a.entrada < b.entrada ? -1 : 1));
   }
   $('f-csv').addEventListener('change', async (e) => {
@@ -677,7 +682,8 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
       if (!res.ok) throw new Error(res.status);
       const j = await res.json();
       st.reportes = (Array.isArray(j.reportes) ? j.reportes : []).map((d) => limpiar(String(d.fecha), d)).filter(Boolean).sort((a, b) => a.id < b.id ? -1 : 1);
-      st.comunidad = (Array.isArray(j.comunidad) ? j.comunidad : []).filter((c) => c && typeof c.e === 'string' && typeof c.n === 'string');
+      st.listas = (Array.isArray(j.listas) ? j.listas : []).filter((L) => L && typeof L.nombre === 'string' && Array.isArray(L.miembros))
+        .map((L) => ({ nombre: L.nombre, pendientes: !!L.pendientes, miembros: L.miembros.map((m) => ({ e: typeof m.e === 'string' ? m.e : '', n: Array.isArray(m.n) ? m.n.filter((h) => typeof h === 'string') : [] })) }));
       if (!st.reportes.length) return vacio('Todavía no hay reportes cargados.');
       st.local = true;
       render();
