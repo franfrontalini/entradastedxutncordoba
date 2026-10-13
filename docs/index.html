@@ -559,10 +559,10 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
     if (n.includes('INVITACI')) return 'invitacion';
     return 'otros';
   }
-  const ORADOR = /^\s*ORADOR(A|ES|AS)?\b/i;
+  const ORADOR = /^\s*(ORADOR|CONDUCTOR)(A|ES|AS)?\b/i, CORO = /^\s*COROS?\b/i;
   function entradaDe(r) {
-    const e = (r['Entrada'] || '').trim();
-    return grupoDe(e) === 'invitacion' ? e + ' - ' + (ORADOR.test(r['Nombre'] || '') ? 'Invitados de oradores' : 'Otras invitaciones') : e;
+    const e = (r['Entrada'] || '').trim(), n = r['Nombre'] || '';
+    return grupoDe(e) === 'invitacion' ? e + ' - ' + (ORADOR.test(n) ? 'Invitados de oradores' : CORO.test(n) ? 'Coro' : 'Otras invitaciones') : e;
   }
   const diaCba = (v) => { const d = new Date(String(v).trim()); return isNaN(d) ? '' : d.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Cordoba' }); };
   function desdeCSV(archivo, texto) {

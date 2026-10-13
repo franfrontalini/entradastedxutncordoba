@@ -22,13 +22,20 @@ def grupo(nombre):
     if 'INVITACI' in n: return 'invitacion'
     return 'otros'
 
-# Los invitados de oradores vienen con el nombre cargado como "ORADOR …" u "ORADORA …".
-ORADOR = re.compile(r'\s*ORADOR(A|ES|AS)?\b', re.I)
+# Las invitaciones se marcan en el campo Nombre: "ORADOR/ORADORA …" y "CONDUCTOR/CONDUCTORA …" van a
+# Invitados de oradores; "CORO …" va a Coro; el resto, a Otras invitaciones.
+ORADOR = re.compile(r'\s*(ORADOR|CONDUCTOR)(A|ES|AS)?\b', re.I)
+CORO = re.compile(r'\s*COROS?\b', re.I)
+
+def invitacion(nombre):
+    if ORADOR.match(nombre): return 'Invitados de oradores'
+    if CORO.match(nombre): return 'Coro'
+    return 'Otras invitaciones'
 
 def entrada_de(r):
     e = r['Entrada'].strip()
     if grupo(e) == 'invitacion':
-        e += ' - ' + ('Invitados de oradores' if ORADOR.match(r.get('Nombre') or '') else 'Otras invitaciones')
+        e += ' - ' + invitacion(r.get('Nombre') or '')
     return e
 
 def precio(v):

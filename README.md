@@ -59,7 +59,7 @@ Se evalúa en este orden y gana la primera regla que coincide:
 - `SPONSOR - <empresa>` → Sponsors, con una fila por empresa
 - `UTN - <sector>` → UTN, con una fila por sector
 - nombres que contienen `GENERAL` → General
-- nombres que contienen `INVITACI` → Invitaciones, separadas en *Invitados de oradores* (el campo Nombre empieza con `ORADOR` u `ORADORA`) y *Otras invitaciones*
+- nombres que contienen `INVITACI` → Invitaciones, separadas según cómo empieza el campo Nombre: *Invitados de oradores* (`ORADOR`, `ORADORA`, `CONDUCTOR`, `CONDUCTORA`), *Coro* (`CORO`) y *Otras invitaciones*
 - cualquier otro nombre → Otros
 
 ## Datos personales
