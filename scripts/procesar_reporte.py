@@ -2,9 +2,9 @@
 Uso: python3 -I procesar_reporte.py <csv> <salida.json> [--acumular docs/reportes.json]
 Con --acumular, además agrega el corte al archivo que lee el tablero en GitHub Pages
 (un corte del mismo día reemplaza al anterior).
-Con --personas <archivo.json>, además genera el listado de asistentes de Sponsors, UTN e Invitaciones
-(nombre, apellido, DNI, mail, teléfono) para la base privada del artifact. Ese archivo tiene datos
-personales: nunca va al repo ni a GitHub Pages.
+Con --personas <archivo.json>, además genera el listado de asistentes de todas las entradas
+(nombre, apellido, DNI, mail, teléfono). Ese archivo tiene datos personales: nunca va al repo sin cifrar
+(ver scripts/cifrar_asistentes.mjs).
 Solo usa la librería estándar (Python 3.9+)."""
 import sys, re, json, os, csv
 from collections import Counter, defaultdict
@@ -101,14 +101,12 @@ if acumular:
     print(f'{acumular}: {len(todos)} cortes')
 if personas:
     # Una entrada por documento de la colección `personas`, con id derivado del nombre de la entrada.
-    GRUPOS_CON_NOMBRES = ('sponsor', 'utn', 'invitacion')
     campo = lambda r, k: (r.get(k) or '').strip()
     listas = defaultdict(list)
     for r in crudas:
         e = entrada_de(r)
-        if grupo(e) in GRUPOS_CON_NOMBRES:
-            listas[e].append({'nombre': campo(r, 'Nombre'), 'apellido': campo(r, 'Apellido'), 'documento': campo(r, 'Documento'),
-                              'email': campo(r, 'Email'), 'telefono': campo(r, 'Teléfono'), 'dia': dia(r['Fecha de compra'])})
+        listas[e].append({'nombre': campo(r, 'Nombre'), 'apellido': campo(r, 'Apellido'), 'documento': campo(r, 'Documento'),
+                         'email': campo(r, 'Email'), 'telefono': campo(r, 'Teléfono'), 'dia': dia(r['Fecha de compra'])})
     def slug(t):
         import unicodedata
         t = unicodedata.normalize('NFKD', t).encode('ascii', 'ignore').decode().lower()

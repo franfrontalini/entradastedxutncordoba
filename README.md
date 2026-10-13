@@ -26,11 +26,21 @@ y la variación entre un reporte y el siguiente.
    Hacé commit y push de ese archivo y GitHub Pages se actualiza en uno o dos minutos.
 4. Para el artifact de claude.ai, el mismo resumen se guarda en la colección `reportes` de su base, con la fecha del corte como id.
 
-## Asistentes por tipo de entrada (solo en claude.ai)
+## Asistentes por tipo de entrada
 
-El artifact tiene un panel con nombre, apellido, DNI, mail y teléfono de quienes tienen entradas de Sponsors, UTN e Invitaciones.
-Esos datos se generan con `--personas <archivo.json>` y se guardan solo en la colección `personas` de la base privada del artifact,
-que únicamente lee quien puede editar el tablero. Nunca van al repo ni a GitHub Pages. En Pages el panel tiene un botón *Abrir CSV de entradas*: el archivo se lee en el navegador y no se sube a ningún lado.
+El panel muestra nombre, apellido, DNI, mail y teléfono de todas las entradas, filtrable por tipo.
+
+- **claude.ai:** sale de la colección `personas` de la base privada del artifact, que solo lee quien puede editar el tablero.
+- **GitHub Pages:** sale de `docs/asistentes.json`, que está **cifrado** (PBKDF2-SHA256 + AES-256-GCM) con el código de acceso.
+  La página pide el código y descifra en el navegador. El código no está en el repo: se pasa al cifrar.
+
+  ```bash
+  python3 -I scripts/procesar_reporte.py "<csv>" /tmp/corte.json --personas /tmp/personas.json
+  ASISTENTES_CODIGO='…' node scripts/cifrar_asistentes.mjs /tmp/personas.json docs/asistentes.json
+  rm /tmp/personas.json
+  ```
+
+  También se puede abrir el CSV directamente en la página (botón *Abrir CSV de entradas*), sin subir nada.
 
 ## GitHub Pages
 

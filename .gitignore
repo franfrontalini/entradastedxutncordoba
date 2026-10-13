@@ -8,3 +8,5 @@ reportes/
 __pycache__/
 # Excepción temporal: solo totales agregados, para el tablero en GitHub Pages durante la semana del evento.
 !docs/reportes.json
+# Listado de asistentes, solo cifrado con el código de acceso (scripts/cifrar_asistentes.mjs).
+!docs/asistentes.json

@@ -121,6 +121,13 @@ input[type="search"] { font: inherit; color: var(--ink); background: var(--surfa
 input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .p-count { font-size: 13.5px; color: var(--ink-2); margin-left: auto; align-self: center; }
 .privado { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); border: 1px solid var(--axis); border-radius: 4px; padding: 1px 6px; margin-left: 8px; vertical-align: 2px; }
+.p-codigo { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; }
+.p-codigo label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--ink-2); }
+.p-codigo input { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--axis); border-radius: 6px; padding: 6px 10px; width: 200px; max-width: 100%; letter-spacing: 0.04em; }
+.p-codigo input:focus-visible, .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.p-codigo .msg { flex-basis: 100%; margin: 0; font-size: 13px; color: var(--ink-2); min-height: 1.2em; }
+.p-codigo .msg.error { color: var(--down); }
+button.btn:disabled { opacity: 0.6; cursor: progress; }
 .p-abrir { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
 .p-abrir .sub { margin: 0; max-width: 60ch; }
 .btn { display: inline-block; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--surface); background: var(--ink); border: 1px solid var(--ink); border-radius: 6px; padding: 7px 14px; cursor: pointer; }
@@ -189,11 +196,16 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
       <div class="panel-head">
         <div>
           <h2>Asistentes por tipo de entrada<span class="privado">Privado</span></h2>
-          <p class="sub" id="p-sub">Sponsors, UTN e invitaciones. Solo lo ve quien puede editar este tablero.</p>
+          <p class="sub" id="p-sub">Todas las entradas, con los datos de cada persona.</p>
         </div>
       </div>
+      <form class="p-codigo" id="p-codigo" hidden autocomplete="off">
+        <label for="c-acceso">Código de acceso<input type="password" id="c-acceso" autocomplete="off" spellcheck="false" required></label>
+        <button type="submit" class="btn" id="c-btn">Ver asistentes</button>
+        <p class="msg" id="c-msg" aria-live="polite">El listado está cifrado: se descifra en este navegador con el código.</p>
+      </form>
       <div class="p-abrir" id="p-abrir" hidden>
-        <input type="file" id="f-csv" class="sr" accept=".csv,text/csv"><label class="btn" id="f-csv-btn" for="f-csv">Abrir CSV de entradas</label>
+        <input type="file" id="f-csv" class="sr" accept=".csv,text/csv"><label class="btn sec" id="f-csv-btn" for="f-csv">Abrir CSV de entradas</label>
         <p class="sub" id="p-abrir-txt">Elegí el CSV exportado (tickets_HABILITADAS…). Se lee solo en este navegador: no se sube a ningún lado y desaparece al cerrar la página.</p>
       </div>
       <div class="p-datos" id="p-datos" hidden>
@@ -278,7 +290,7 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
   function sv(tag, attrs) { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); return n; }
   const sw = (c) => el('span', { class: 'sw', style: 'background:' + c });
 
-  const st = { reportes: [], sel: null, modo: 'dia', dia: null, personas: [], pSel: null, pQ: '', local: false, archivo: '' };
+  const st = { reportes: [], sel: null, modo: 'dia', dia: null, personas: [], pSel: null, pQ: '', local: false, fuente: null };
 
   // Normaliza un documento del reporte; lo que no tenga la forma esperada se descarta.
   function limpiar(id, d) {
@@ -477,7 +489,8 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
   }
   function renderPersonas() {
     const panel = $('p-personas');
-    $('p-abrir').hidden = !st.local;
+    $('p-codigo').hidden = !st.local || st.personas.length > 0;
+    $('p-abrir').hidden = !st.local || st.fuente === 'codigo';
     if (!st.personas.length) { panel.hidden = !st.local; $('p-datos').hidden = true; return; }
     panel.hidden = false; $('p-datos').hidden = false;
     const grupos = GRUPOS.filter((g) => st.personas.some((p) => p.grupo === g.id));
@@ -490,7 +503,12 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
       opts.push(og);
     });
     const valido = (v) => v && (v.startsWith('g:') ? grupos.some((g) => 'g:' + g.id === v) : st.personas.some((p) => 'e:' + p.id === v));
-    if (!valido(st.pSel)) st.pSel = grupos[0] && st.personas.filter((p) => p.grupo === grupos[0].id).length > 1 ? 'g:' + grupos[0].id : 'e:' + st.personas[0].id;
+    if (!valido(st.pSel)) {
+      // Arranca en Sponsors si hay; si no, en el primer grupo.
+      const g0 = grupos.find((g) => g.id === 'sponsor') || grupos[0];
+      const ls0 = st.personas.filter((p) => p.grupo === g0.id);
+      st.pSel = ls0.length > 1 ? 'g:' + g0.id : 'e:' + ls0[0].id;
+    }
     $('sel-personas').replaceChildren(...opts);
     $('sel-personas').value = st.pSel;
     const elegidos = st.pSel.startsWith('g:') ? st.personas.filter((p) => 'g:' + p.grupo === st.pSel) : st.personas.filter((p) => 'e:' + p.id === st.pSel);
@@ -502,7 +520,7 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
     if (q) filas = filas.filter((x) => plano([x.nombre, x.apellido, x.documento, x.email, x.telefono].join(' ')).includes(q));
     filas.sort((a, b) => plano(a.apellido + ' ' + a.nombre) < plano(b.apellido + ' ' + b.nombre) ? -1 : 1);
     const cortes = [...new Set(elegidos.map((p) => p.corte).filter(Boolean))];
-    $('p-sub').textContent = 'Sponsors, UTN e invitaciones' + (cortes.length ? ', según el corte del ' + cortes.join(', ') : '') + '.' + (st.local ? '' : ' Solo lo ve quien puede editar este tablero.');
+    $('p-sub').textContent = 'Todas las entradas' + (cortes.length ? ', según el corte del ' + cortes.join(', ') : '') + '.' + (st.local ? '' : ' Solo lo ve quien puede editar este tablero.');
     $('p-count').textContent = q ? num(filas.length) + ' de ' + num(total) + ' personas' : num(total) + (total === 1 ? ' persona' : ' personas');
     const raya = (v) => v || el('span', { class: 'dim' }, '—');
     const head = el('tr', null, el('th', null, 'Apellido y nombre'), varias ? el('th', null, 'Entrada') : null, el('th', null, 'DNI'), el('th', null, 'Mail'), el('th', null, 'Teléfono'), el('th', { class: 'hide-sm' }, 'Compra'));
@@ -555,7 +573,6 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
     const listas = {};
     filas.forEach((r) => {
       const e = entradaDe(r);
-      if (!['sponsor', 'utn', 'invitacion'].includes(grupoDe(e))) return;
       const t = (k) => (r[k] || '').trim();
       (listas[e] = listas[e] || []).push({ nombre: t('Nombre'), apellido: t('Apellido'), documento: t('Documento'), email: t('Email'), telefono: t('Teléfono'), dia: diaCba(r['Fecha de compra']) });
     });
@@ -567,7 +584,7 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
     e.target.value = '';
     if (!f) return;
     try {
-      st.personas = desdeCSV(f.name, await f.text()); st.archivo = f.name; st.pSel = null;
+      st.personas = desdeCSV(f.name, await f.text()); st.fuente = 'csv'; st.pSel = null;
       $('p-abrir-txt').textContent = 'Leído de “' + f.name + '” en este navegador. No se sube a ningún lado y desaparece al cerrar la página.';
       $('f-csv-btn').textContent = 'Abrir otro CSV'; $('f-csv-btn').classList.add('sec');
     } catch (err) {
@@ -575,6 +592,36 @@ input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-o
       $('p-abrir-txt').textContent = 'No pude leer “' + f.name + '”: ' + err.message + '. Elegí el CSV exportado de entradas habilitadas.';
     }
     renderPersonas();
+  });
+  // Listado cifrado (docs/asistentes.json): PBKDF2-SHA256 → AES-256-GCM, mismos parámetros que scripts/cifrar_asistentes.mjs.
+  const b64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
+  async function descifrar(codigo) {
+    const res = await fetch('asistentes.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('sin-archivo');
+    const j = await res.json();
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(codigo), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(j.salt), iterations: j.iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    let plano;
+    try { plano = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(j.iv) }, key, b64(j.data)); }
+    catch (e) { throw new Error('codigo'); }
+    return JSON.parse(new TextDecoder().decode(plano));
+  }
+  $('p-codigo').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const codigo = $('c-acceso').value.trim().toUpperCase();
+    if (!codigo) return;
+    const msg = $('c-msg'), btn = $('c-btn');
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Descifrando…';
+    try {
+      const docs = await descifrar(codigo);
+      st.personas = docs.map((d) => limpiarP(d.id, d)).filter(Boolean).sort((a, b) => GI[a.grupo] - GI[b.grupo] || (a.entrada < b.entrada ? -1 : 1));
+      st.fuente = 'codigo'; st.pSel = null; $('c-acceso').value = '';
+      renderPersonas();
+    } catch (err) {
+      msg.className = 'msg error';
+      msg.textContent = err.message === 'codigo' ? 'Código incorrecto. Revisalo y probá de nuevo.' : 'No se pudo leer el listado. Recargá la página y probá de nuevo.';
+    }
+    btn.disabled = false;
   });
   $('sel-personas').addEventListener('change', (e) => { st.pSel = e.target.value; renderPersonas(); });
   $('q-personas').addEventListener('input', (e) => { st.pQ = e.target.value; renderPersonas(); });
