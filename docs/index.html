@@ -578,7 +578,12 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
     const e = (r['Entrada'] || '').trim(), n = r['Nombre'] || '';
     return grupoDe(e) === 'invitacion' ? e + ' - ' + (lista || (ORADOR.test(n) ? 'Invitados de oradores' : CORO.test(n) ? 'Coro' : 'Otras invitaciones')) : e;
   }
-  const diaCba = (v) => { const d = new Date(String(v).trim()); return isNaN(d) ? '' : d.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Cordoba' }); };
+  // Dos formatos de export: UTC ISO (2026-08-28T02:26:42Z) o ya en hora de Córdoba (27/08/2026 23:26).
+  const diaCba = (v) => {
+    const t = String(v).trim(), m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (m) return m[3] + '-' + m[2].padStart(2, '0') + '-' + m[1].padStart(2, '0');
+    const d = new Date(t); return isNaN(d) ? '' : d.toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Cordoba' });
+  };
   async function desdeCSV(archivo, texto) {
     const filas = csvParse(texto);
     if (!filas.length || !('Entrada' in filas[0]) || !('Nombre' in filas[0])) throw new Error('no tiene las columnas del export de entradas (Entrada, Nombre, Apellido…)');

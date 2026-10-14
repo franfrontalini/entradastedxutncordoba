@@ -83,8 +83,12 @@ def precio(v):
     except (TypeError, ValueError): return 0.0
 
 def dia(v):
-    # Viene en UTC con Z (2026-08-28T02:26:42.184Z); se pasa a hora de Córdoba.
-    return datetime.fromisoformat(v.strip().replace('Z', '+00:00')).astimezone(TZ).strftime('%Y-%m-%d')
+    # Dos formatos de export: UTC con Z (2026-08-28T02:26:42.184Z), que se pasa a hora de Córdoba,
+    # o ya en hora de Córdoba (27/08/2026 23:26).
+    v = v.strip()
+    m = re.match(r'(\d{1,2})/(\d{1,2})/(\d{4})', v)
+    if m: return f'{m[3]}-{int(m[2]):02d}-{int(m[1]):02d}'
+    return datetime.fromisoformat(v.replace('Z', '+00:00')).astimezone(TZ).strftime('%Y-%m-%d')
 
 def opcion(args, nombre):
     if nombre not in args: return None
