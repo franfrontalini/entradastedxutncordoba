@@ -34,6 +34,8 @@ INVITACIONES = 'INVITACIONES ESPECIALES'
 LISTAS = [
     {'nombre': 'Comunidad TEDx', 'archivo': 'comunidad_tedx.tsv', 'pendientes': True},
     {'nombre': 'Equipo interno', 'archivo': 'equipo_interno.tsv', 'pendientes': False},
+    # Ganadores del sorteo por mail; los que vienen con Nombre "SORTEO …" ya entran por la regla de abajo.
+    {'nombre': 'Sorteo', 'archivo': 'sorteo.tsv', 'pendientes': False},
 ]
 
 def clave(nombre, apellido):
