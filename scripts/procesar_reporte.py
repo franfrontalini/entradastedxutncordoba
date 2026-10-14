@@ -23,9 +23,10 @@ def grupo(nombre):
     return 'otros'
 
 # Las invitaciones se marcan en el campo Nombre: "ORADOR/ORADORA …" y "CONDUCTOR/CONDUCTORA …" van a
-# Invitados de oradores; "CORO …" va a Coro; el resto, a Otras invitaciones.
+# Invitados de oradores; "CORO …" va a Coro; "SORTEO …" va a Sorteo; el resto, a Otras invitaciones.
 ORADOR = re.compile(r'\s*(ORADOR|CONDUCTOR)(A|ES|AS)?\b', re.I)
 CORO = re.compile(r'\s*COROS?\b', re.I)
+SORTEO = re.compile(r'\s*SORTEOS?\b', re.I)
 
 # Listas fijas de invitados (en datos/, fuera del repo). Una invitación cuyo mail o nombre y apellido (en cualquier
 # orden) figura en una lista va a esa categoría. Con pendientes=True se cuenta quiénes de la lista no tienen entrada.
@@ -70,6 +71,7 @@ def lista_de(r):
 def invitacion(nombre):
     if ORADOR.match(nombre): return 'Invitados de oradores'
     if CORO.match(nombre): return 'Coro'
+    if SORTEO.match(nombre): return 'Sorteo'
     return 'Otras invitaciones'
 
 def entrada_de(r):

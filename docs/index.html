@@ -568,7 +568,7 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
     if (n.includes('INVITACI')) return 'invitacion';
     return 'otros';
   }
-  const ORADOR = /^\s*(ORADOR|CONDUCTOR)(A|ES|AS)?\b/i, CORO = /^\s*COROS?\b/i;
+  const ORADOR = /^\s*(ORADOR|CONDUCTOR)(A|ES|AS)?\b/i, CORO = /^\s*COROS?\b/i, SORTEO = /^\s*SORTEOS?\b/i;
   // Listas fijas (Comunidad TEDx, Equipo interno): reportes.json trae solo hashes SHA-256 del mail y del nombre de cada
   // integrante, no las listas. Misma normalización que procesar_reporte.py.
   const clave = (n, a) => plano(n + ' ' + a).replace(/[^\x00-\x7f]/g, '').replace(/\s+/g, ' ').trim();
@@ -576,7 +576,7 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
   const sha = async (t) => [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)))].map((b) => b.toString(16).padStart(2, '0')).join('');
   function entradaDe(r, lista) {
     const e = (r['Entrada'] || '').trim(), n = r['Nombre'] || '';
-    return grupoDe(e) === 'invitacion' ? e + ' - ' + (lista || (ORADOR.test(n) ? 'Invitados de oradores' : CORO.test(n) ? 'Coro' : 'Otras invitaciones')) : e;
+    return grupoDe(e) === 'invitacion' ? e + ' - ' + (lista || (ORADOR.test(n) ? 'Invitados de oradores' : CORO.test(n) ? 'Coro' : SORTEO.test(n) ? 'Sorteo' : 'Otras invitaciones')) : e;
   }
   // Dos formatos de export: UTC ISO (2026-08-28T02:26:42Z) o ya en hora de Córdoba (27/08/2026 23:26).
   const diaCba = (v) => {
