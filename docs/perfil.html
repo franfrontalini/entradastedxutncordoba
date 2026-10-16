@@ -281,7 +281,7 @@ select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px s
     }).filter(Boolean);
     $('destacados').replaceChildren(...items);
 
-    $('cards').replaceChildren(...CARDS.map((k) => el('section', { class: 'card' }, el('h3', null, DIM[k].label), el('div', { class: 'scroll' }, tabla(F, k, false)))));
+    $('cards').replaceChildren(...CARDS.map((k) => el('section', { class: 'card' }, el('h3', null, DIM[k].label), el('div', { class: 'scroll' }, tabla(F, k, true)))));
   }
 
   function renderFiltros() {
