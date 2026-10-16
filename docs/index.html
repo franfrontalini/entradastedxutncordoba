@@ -44,6 +44,8 @@ h2 { font-size: 17px; font-weight: 600; }
 
 header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; }
 header.top > div { min-width: 0; }
+.link-perfil { font-size: 13.5px; color: var(--accent); text-decoration: none; margin-left: auto; }
+.link-perfil:hover { text-decoration: underline; }
 .filter { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink-2); }
 select, .seg button { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--axis); border-radius: 6px; padding: 6px 10px; }
 select:focus-visible, .seg button:focus-visible, .daybtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -172,6 +174,7 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
       <h1>Entradas habilitadas</h1>
       <p class="sub" id="stamp">Cargando reportes…</p>
     </div>
+    <a class="link-perfil" id="link-perfil" href="perfil.html">Perfil de asistentes →</a>
     <label class="filter" for="sel-reporte" id="filter" hidden>Reporte
       <select id="sel-reporte"></select>
     </label>
@@ -722,6 +725,9 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
   async function start() {
     const db = window.claude && window.claude.use ? await window.claude.use('db') : null;
     if (db) {
+      // La página de perfil vive en GitHub Pages.
+      $('link-perfil').href = 'https://franfrontalini.github.io/entradastedxutncordoba/docs/perfil.html';
+      $('link-perfil').target = '_blank'; $('link-perfil').rel = 'noopener';
       db.collection('reportes').onSnapshot((snap) => {
         st.reportes = snap.docs.map((d) => limpiar(d.id, d.data())).filter(Boolean).sort((a, b) => a.id < b.id ? -1 : 1);
         if (!st.reportes.length) return vacio('Todavía no hay reportes cargados. Pasale a Claude el CSV de entradas habilitadas del día y el consumo aparece acá.');

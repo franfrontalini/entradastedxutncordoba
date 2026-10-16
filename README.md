@@ -37,6 +37,18 @@ python3 -I scripts/procesar_reporte.py "<emitidas.csv>" /tmp/corte.json --acumul
 
 El tablero muestra entonces el panel *Emitidas vs usadas* con el porcentaje de uso por categoría.
 
+## Perfil de asistentes (`docs/perfil.html`)
+
+Página aparte con emitidas vs usadas por segmento: vínculo con UTN, especialidad, año de cursado, edad, si fue a ediciones
+anteriores, cómo se enteró y si compró la entrada. Muestra los segmentos principales y un explorador para combinar filtros.
+No hay campo de género en el formulario. Los datos (una fila por entrada, sin nombres, DNI ni mails) se generan con
+`--perfil` y se publican cifrados con el mismo código de acceso:
+
+```bash
+python3 -I scripts/procesar_reporte.py "<emitidas.csv>" /tmp/corte.json --usadas "<usadas.csv>" --perfil /tmp/perfil.json
+ASISTENTES_CODIGO='…' node scripts/cifrar_asistentes.mjs /tmp/perfil.json docs/perfil.json
+```
+
 ## Asistentes por tipo de entrada
 
 El panel muestra nombre, apellido, DNI, mail y teléfono de todas las entradas, filtrable por tipo.

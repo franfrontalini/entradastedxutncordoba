@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Perfil de asistentes TEDxUTNCórdoba</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: mismo sistema que el tablero de entradas. Arriba el resumen, después los segmentos fijos en tarjetas y al final el explorador de nichos. */
+:root {
+  --plane: #f4f4f1; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #7b7973;
+  --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10); --wash: rgba(11,11,11,0.06);
+  --accent: #1c5cab; --up: #006300; --down: #b02a2a; --bar: #2a78d6;
+  --sans: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --plane: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #94928b;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10); --wash: rgba(255,255,255,0.08);
+    --accent: #6da7ec; --up: #0ca30c; --down: #e66767; --bar: #3987e5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --plane: #0d0d0d; --surface: #1a1a19; --ink: #ffffff; --ink-2: #c3c2b7; --muted: #94928b;
+  --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10); --wash: rgba(255,255,255,0.08);
+  --accent: #6da7ec; --up: #0ca30c; --down: #e66767; --bar: #3987e5;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--plane); color: var(--ink); font-family: var(--sans); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: flex; flex-direction: column; gap: 20px; }
+.contenido { display: flex; flex-direction: column; gap: 20px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 17px; font-weight: 600; }
+h3 { font-size: 14.5px; font-weight: 600; }
+.eyebrow { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.sub { color: var(--ink-2); font-size: 13.5px; margin: 2px 0 0; max-width: 72ch; }
+.dim { color: var(--muted); }
+a { color: var(--accent); }
+header.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; }
+header.top > div { min-width: 0; }
+.volver { font-size: 13.5px; text-decoration: none; }
+.volver:hover { text-decoration: underline; }
+
+.panel { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px 20px; }
+.panel-head > div { min-width: 0; }
+
+/* Resumen */
+.stub { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.fact { padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; min-width: 0; border-left: 1px solid var(--grid); }
+.fact:first-child { border-left: 0; }
+.fact .label { font-size: 12.5px; color: var(--ink-2); }
+.fact .value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.fact .note { font-size: 12.5px; color: var(--muted); }
+.delta-up { color: var(--up); } .delta-down { color: var(--down); }
+
+/* Destacados */
+.destacados { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; }
+.destacados li { display: flex; flex-direction: column; gap: 3px; padding: 10px 0; border-top: 1px solid var(--grid); min-width: 0; }
+.destacados .dim-n { font-size: 12.5px; color: var(--ink-2); }
+.destacados .linea { font-size: 14px; }
+.destacados b { font-weight: 600; }
+
+/* Tarjetas de segmentos */
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.card { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+th { text-align: left; font-weight: 500; font-size: 12px; color: var(--muted); padding: 0 10px 6px 0; white-space: nowrap; }
+td { padding: 6px 10px 6px 0; border-top: 1px solid var(--grid); vertical-align: middle; }
+th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+th:last-child, td:last-child { padding-right: 0; }
+td.seg { min-width: 110px; }
+td.barra { width: 34%; min-width: 80px; }
+tr.sindato td { color: var(--muted); }
+tfoot td { font-weight: 600; border-top: 1px solid var(--axis); }
+.scroll { overflow-x: auto; }
+.track { height: 9px; background: var(--wash); border-radius: 0 4px 4px 0; }
+.track .u { height: 9px; background: var(--bar); border-radius: 0 4px 4px 0; min-width: 1px; }
+tr.sindato .track .u { opacity: .45; }
+.leyenda { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); }
+.leyenda span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+/* Explorador */
+.filtros { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px 14px; }
+.filtros label, .ver label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--ink-2); min-width: 0; }
+select, button, input { font: inherit; color: var(--ink); }
+select { background: var(--surface); border: 1px solid var(--axis); border-radius: 6px; padding: 6px 8px; width: 100%; min-width: 0; }
+select.activo { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+select:focus-visible, button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn { font-size: 13.5px; font-weight: 600; color: var(--surface); background: var(--ink); border: 1px solid var(--ink); border-radius: 6px; padding: 7px 14px; cursor: pointer; }
+.btn.sec { color: var(--ink); background: var(--surface); border-color: var(--axis); font-weight: 500; }
+.btn:disabled { opacity: .6; cursor: progress; }
+.ver { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 14px; }
+.ver label { width: 240px; max-width: 100%; }
+.nicho { font-size: 14px; color: var(--ink-2); }
+.nicho b { color: var(--ink); font-weight: 600; }
+.res { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--grid); border-radius: 8px; }
+.res .fact { padding: 14px 16px; }
+.res .fact .value { font-size: 24px; }
+.vacio { color: var(--ink-2); padding: 18px 0; text-align: center; }
+
+/* Acceso */
+.p-codigo { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; }
+.p-codigo label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--ink-2); }
+.p-codigo input { background: var(--surface); border: 1px solid var(--axis); border-radius: 6px; padding: 6px 10px; width: 200px; max-width: 100%; letter-spacing: 0.04em; }
+.p-codigo .msg { flex-basis: 100%; margin: 0; font-size: 13px; color: var(--ink-2); min-height: 1.2em; }
+.p-codigo .msg.error { color: var(--down); }
+
+@media (max-width: 860px) {
+  .cards, .destacados { grid-template-columns: 1fr; }
+  .stub, .res { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stub .fact:nth-child(odd), .res .fact:nth-child(odd) { border-left: 0; }
+  .stub .fact:nth-child(n+3), .res .fact:nth-child(n+3) { border-top: 1px solid var(--grid); }
+}
+@media (max-width: 560px) {
+  .wrap { padding-inline: 16px; }
+  .panel { padding: 16px; }
+  .fact .value { font-size: 22px; }
+  td.barra { display: none; }
+  th.barra { display: none; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">TEDxUTNCórdoba · 6° edición</div>
+      <h1>Perfil de asistentes</h1>
+      <p class="sub" id="stamp">Entradas emitidas y usadas en el evento, por segmento.</p>
+    </div>
+    <a class="volver" id="volver" href="./">← Tablero de entradas</a>
+  </header>
+
+  <section class="panel" id="acceso">
+    <div>
+      <h2>Acceso</h2>
+      <p class="sub">Los datos de perfil están cifrados. Se descifran en este navegador con el código de acceso del tablero.</p>
+    </div>
+    <form class="p-codigo" id="p-codigo" autocomplete="off">
+      <label for="c-acceso">Código de acceso<input type="password" id="c-acceso" autocomplete="off" spellcheck="false" required></label>
+      <button type="submit" class="btn" id="c-btn">Ver perfil</button>
+      <p class="msg" id="c-msg" aria-live="polite"></p>
+    </form>
+  </section>
+
+  <main class="contenido" id="contenido" hidden>
+    <section class="stub" id="resumen" aria-label="Resumen"></section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Principales segmentos</h2>
+          <p class="sub">Segmentos con 10 entradas emitidas o más. "Sin dato" son entradas sin formulario de perfil: las invitaciones y casi todas las de UTN.</p>
+        </div>
+      </div>
+      <ul class="destacados" id="destacados"></ul>
+    </section>
+
+    <div class="leyenda"><span><span class="sw" style="background:var(--bar)"></span>Usadas</span><span><span class="sw" style="background:var(--wash);border:1px solid var(--axis)"></span>Emitidas sin usar</span></div>
+    <div class="cards" id="cards"></div>
+
+    <section class="panel" id="explorador">
+      <div class="panel-head">
+        <div>
+          <h2>Explorar un nicho</h2>
+          <p class="sub">Combiná filtros para aislar un grupo y mirá cómo se comporta frente al total. El desglose muestra ese grupo abierto por el campo que elijas.</p>
+        </div>
+        <button type="button" class="btn sec" id="limpiar">Limpiar filtros</button>
+      </div>
+      <div class="filtros" id="filtros"></div>
+      <p class="nicho" id="nicho"></p>
+      <div class="res" id="res"></div>
+      <div class="ver"><label for="sel-ver">Ver desglose por<select id="sel-ver"></select></label></div>
+      <div class="scroll"><table id="t-desglose"></table></div>
+    </section>
+  </main>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const nf = new Intl.NumberFormat('es-AR');
+  const num = (n) => nf.format(n);
+  const pct = (u, e) => e ? (100 * u / e).toFixed(1).replace('.', ',') + '%' : '—';
+  const pp = (d) => (d > 0 ? '+' : d < 0 ? '−' : '') + Math.abs(d).toFixed(1).replace('.', ',') + ' pp';
+  function el(tag, attrs, ...kids) {
+    const n = document.createElement(tag);
+    for (const k in (attrs || {})) { if (k === 'class') n.className = attrs[k]; else if (k === 'style') n.style.cssText = attrs[k]; else n.setAttribute(k, attrs[k]); }
+    for (const c of kids) if (c != null) n.append(c);
+    return n;
+  }
+
+  // Misma clasificación que procesar_reporte.py.
+  function grupoDe(nombre) {
+    const n = nombre.toUpperCase().trim();
+    if (n.startsWith('PRE VENTA') || n.startsWith('PREVENTA')) return 'Pre venta';
+    if (n.startsWith('SPONSOR')) return 'Sponsors';
+    if (n.startsWith('UTN')) return 'UTN';
+    if (n.includes('GENERAL')) return 'Entrada general';
+    if (n.includes('INVITACI')) return 'Invitaciones';
+    return 'Otros';
+  }
+  function categoria(t) {
+    const i = t.indexOf(' - ');
+    return i > 0 ? grupoDe(t) + ' · ' + t.slice(i + 3).trim() : grupoDe(t);
+  }
+
+  const ULTIMOS = ['Otro', 'Sin dato'];
+  const DIMS = [
+    { k: 'grupo', label: 'Tipo de entrada', get: (r) => grupoDe(r.t), orden: ['Pre venta', 'Entrada general', 'Sponsors', 'UTN', 'Invitaciones', 'Otros'] },
+    { k: 'cat', label: 'Categoría', get: (r) => categoria(r.t) },
+    { k: 'utn', label: 'Comunidad UTN', get: (r) => r.utn, orden: ['Sí', 'No'] },
+    { k: 'vin', label: 'Vínculo con UTN', get: (r) => r.vin, orden: ['Estudiante', 'Graduado', 'Docente', 'No pertenece a UTN'] },
+    { k: 'esp', label: 'Especialidad', get: (r) => r.esp },
+    { k: 'anio', label: 'Año de cursado', get: (r) => r.anio, orden: ['1°', '2°', '3°', '4°', '5°', 'No estoy cursando'] },
+    { k: 'edad', label: 'Edad', get: (r) => r.edad, orden: ['Hasta 20', '21 a 24', '25 a 29', '30 a 39', '40 a 49', '50 o más'] },
+    { k: 'prev', label: 'Fue a ediciones anteriores', get: (r) => r.prev, orden: ['Sí', 'No'] },
+    { k: 'canal', label: 'Cómo se enteró', get: (r) => r.canal },
+    { k: 'tit', label: 'Compró la entrada', get: (r) => r.tit, orden: ['Sí', 'No'] },
+  ];
+  const DIM = Object.fromEntries(DIMS.map((d) => [d.k, d]));
+  const CARDS = ['vin', 'utn', 'edad', 'esp', 'anio', 'prev', 'canal', 'grupo'];
+  const DESTACAR = ['vin', 'edad', 'esp', 'anio', 'canal', 'prev', 'grupo'];
+
+  const st = { filas: [], corte: '', filtros: {}, ver: 'vin' };
+
+  // Agrupa filas por una dimensión: [{v, e, u}] en el orden de la dimensión (o por cantidad), con Otro y Sin dato al final.
+  function agrupar(filas, k) {
+    const d = DIM[k], m = new Map();
+    filas.forEach((r) => { const v = d.get(r); const x = m.get(v) || { v, e: 0, u: 0 }; x.e++; x.u += r.u; m.set(v, x); });
+    const pos = (v) => ULTIMOS.includes(v) ? 1000 + ULTIMOS.indexOf(v) : d.orden && d.orden.includes(v) ? d.orden.indexOf(v) : 500;
+    return [...m.values()].sort((a, b) => pos(a.v) - pos(b.v) || b.e - a.e || (a.v < b.v ? -1 : 1));
+  }
+
+  function tabla(filas, k, conTotal) {
+    const g = agrupar(filas, k), max = Math.max(1, ...g.map((x) => x.e));
+    const head = el('tr', null, el('th', null, DIM[k].label), el('th', { class: 'barra' }, ''), el('th', { class: 'num' }, 'Emitidas'), el('th', { class: 'num' }, 'Usadas'), el('th', { class: 'num' }, '% uso'));
+    const rows = g.map((x) => el('tr', x.v === 'Sin dato' ? { class: 'sindato' } : null,
+      el('td', { class: 'seg' }, x.v),
+      el('td', { class: 'barra' }, el('div', { class: 'track', style: 'width:' + (100 * x.e / max).toFixed(2) + '%' }, el('div', { class: 'u', style: 'width:' + (100 * x.u / x.e).toFixed(2) + '%' }))),
+      el('td', { class: 'num' }, num(x.e)), el('td', { class: 'num' }, el('strong', null, num(x.u))), el('td', { class: 'num' }, pct(x.u, x.e))));
+    const t = el('table', null, el('thead', null, head), el('tbody', null, ...rows));
+    if (conTotal) {
+      const e = filas.length, u = filas.reduce((a, r) => a + r.u, 0);
+      t.append(el('tfoot', null, el('tr', null, el('td', null, 'Total'), el('td', { class: 'barra' }, ''), el('td', { class: 'num' }, num(e)), el('td', { class: 'num' }, num(u)), el('td', { class: 'num' }, pct(u, e)))));
+    }
+    return t;
+  }
+
+  function fact(label, value, note, cls) {
+    return el('div', { class: 'fact' }, el('span', { class: 'label' }, label), el('span', { class: 'value' + (cls ? ' ' + cls : '') }, value), el('span', { class: 'note' }, note || ''));
+  }
+
+  function renderFijo() {
+    const F = st.filas, E = F.length, U = F.reduce((a, r) => a + r.u, 0);
+    const conPerfil = F.filter((r) => r.vin !== 'Sin dato').length;
+    $('stamp').textContent = 'Corte final del ' + st.corte + ' h: entradas emitidas y usadas en el evento, por segmento.';
+    $('resumen').replaceChildren(
+      fact('Emitidas', num(E), 'todas las entradas del evento'),
+      fact('Usadas', num(U), 'ingresaron al evento'),
+      fact('% de uso', pct(U, E), num(E - U) + ' sin usar'),
+      fact('Con datos de perfil', num(conPerfil), pct(conPerfil, E) + ' de las emitidas'));
+
+    // Destacados: segmento con más y con menos uso en cada campo (10 o más emitidas, sin "Otro" ni "Sin dato").
+    const prom = 100 * U / E;
+    const items = DESTACAR.map((k) => {
+      const g = agrupar(F, k).filter((x) => x.e >= 10 && !ULTIMOS.includes(x.v));
+      if (g.length < 2) return null;
+      const s = g.slice().sort((a, b) => b.u / b.e - a.u / a.e);
+      const hi = s[0], lo = s[s.length - 1];
+      const frase = (x) => el('span', null, el('b', null, x.v), ' ' + pct(x.u, x.e) + ' ', el('span', { class: 'dim' }, '(' + num(x.u) + ' de ' + num(x.e) + ')'));
+      return el('li', null, el('span', { class: 'dim-n' }, DIM[k].label),
+        el('span', { class: 'linea' }, 'Más uso: ', frase(hi)),
+        el('span', { class: 'linea' }, 'Menos uso: ', frase(lo), ' ', el('span', { class: (100 * lo.u / lo.e) < prom ? 'delta-down' : 'dim' }, pp(100 * lo.u / lo.e - prom) + ' vs total')));
+    }).filter(Boolean);
+    $('destacados').replaceChildren(...items);
+
+    $('cards').replaceChildren(...CARDS.map((k) => el('section', { class: 'card' }, el('h3', null, DIM[k].label), el('div', { class: 'scroll' }, tabla(F, k, false)))));
+  }
+
+  function renderFiltros() {
+    $('filtros').replaceChildren(...DIMS.map((d) => {
+      const s = el('select', { id: 'f-' + d.k });
+      s.append(el('option', { value: '' }, 'Todos'));
+      agrupar(st.filas, d.k).forEach((x) => s.append(el('option', { value: x.v }, x.v + ' (' + num(x.e) + ')')));
+      s.value = st.filtros[d.k] || '';
+      s.classList.toggle('activo', !!st.filtros[d.k]);
+      s.addEventListener('change', () => { if (s.value) st.filtros[d.k] = s.value; else delete st.filtros[d.k]; s.classList.toggle('activo', !!s.value); renderNicho(); });
+      return el('label', { for: 'f-' + d.k }, d.label, s);
+    }));
+    $('sel-ver').replaceChildren(...DIMS.map((d) => el('option', { value: d.k }, d.label)));
+    $('sel-ver').value = st.ver;
+  }
+
+  function renderNicho() {
+    const act = Object.entries(st.filtros);
+    const F = st.filas.filter((r) => act.every(([k, v]) => DIM[k].get(r) === v));
+    const E = F.length, U = F.reduce((a, r) => a + r.u, 0);
+    const TE = st.filas.length, TU = st.filas.reduce((a, r) => a + r.u, 0);
+    $('nicho').replaceChildren(...(act.length
+      ? ['Nicho: ', ...act.flatMap(([k, v], i) => [i ? ' · ' : '', DIM[k].label + ' ', el('b', null, v)])]
+      : ['Sin filtros: se muestra el total de entradas. Elegí uno o más campos para aislar un nicho.']));
+    const d = E ? 100 * U / E - 100 * TU / TE : 0;
+    $('res').replaceChildren(
+      fact('Emitidas', num(E), pct(E, TE) + ' del total'),
+      fact('Usadas', num(U), pct(U, TU) + ' de las usadas'),
+      fact('% de uso', E ? pct(U, E) : '—', E ? num(E - U) + ' sin usar' : ''),
+      fact('Frente al total', E && act.length ? pp(d) : '—', 'total: ' + pct(TU, TE), E && act.length ? (d > 0 ? 'delta-up' : d < 0 ? 'delta-down' : '') : ''));
+    $('t-desglose').replaceChildren(...(E ? tabla(F, st.ver, true).childNodes : [el('tbody', null, el('tr', null, el('td', { class: 'vacio' }, 'Ninguna entrada cumple todos los filtros. Probá sacar alguno.')))]));
+  }
+
+  $('sel-ver').addEventListener('change', (e) => { st.ver = e.target.value; renderNicho(); });
+  $('limpiar').addEventListener('click', () => { st.filtros = {}; renderFiltros(); renderNicho(); });
+
+  // Datos cifrados (perfil.json): PBKDF2-SHA256 → AES-256-GCM, mismos parámetros que scripts/cifrar_asistentes.mjs.
+  const b64 = (t) => Uint8Array.from(atob(t), (c) => c.charCodeAt(0));
+  async function descifrar(codigo) {
+    const res = await fetch('perfil.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('sin-archivo');
+    const j = await res.json();
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(codigo), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey({ name: 'PBKDF2', salt: b64(j.salt), iterations: j.iter, hash: 'SHA-256' }, base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+    let plano;
+    try { plano = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64(j.iv) }, key, b64(j.data)); }
+    catch (e) { throw new Error('codigo'); }
+    return JSON.parse(new TextDecoder().decode(plano));
+  }
+  $('p-codigo').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const codigo = $('c-acceso').value.trim().toUpperCase();
+    if (!codigo) return;
+    const msg = $('c-msg'), btn = $('c-btn');
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = 'Descifrando…';
+    try {
+      const d = await descifrar(codigo);
+      const txt = (v) => (v == null ? '' : String(v));
+      st.filas = (Array.isArray(d.filas) ? d.filas : []).map((r) => ({ t: txt(r.t), u: r.u ? 1 : 0, utn: txt(r.utn), vin: txt(r.vin), esp: txt(r.esp), anio: txt(r.anio), edad: txt(r.edad), prev: txt(r.prev), canal: txt(r.canal), tit: txt(r.tit) }));
+      st.corte = txt(d.corte).split(' ').map((p, i) => i ? p : p.split('-').reverse().join('/')).join(' ');
+      $('acceso').hidden = true; $('contenido').hidden = false; $('c-acceso').value = '';
+      renderFijo(); renderFiltros(); renderNicho();
+    } catch (err) {
+      msg.className = 'msg error';
+      msg.textContent = err.message === 'codigo' ? 'Código incorrecto. Revisalo y probá de nuevo.' : 'No se pudieron leer los datos. Recargá la página y probá de nuevo.';
+    }
+    btn.disabled = false;
+  });
+})();
+</script>
+</html>

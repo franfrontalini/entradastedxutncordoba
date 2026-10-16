@@ -7,6 +7,8 @@ Con --personas <archivo.json>, además genera el listado de asistentes de todas 
 (ver scripts/cifrar_asistentes.mjs).
 Con --usadas <csv de entradas UTILIZADAS>, además cuenta por tipo cuántas de las emitidas se usaron en el evento
 (el <csv> principal tiene que ser el de todas las emitidas: usadas + habilitadas sin usar).
+Con --perfil <archivo.json> (requiere --usadas), además genera una fila por entrada con su segmento (tipo, vínculo con UTN,
+especialidad, año, edad, etc.) y si se usó, sin nombres, DNI ni mails, para la página de perfil (se publica cifrado).
 Solo usa la librería estándar (Python 3.9+)."""
 import sys, re, json, os, csv, hashlib, unicodedata
 from collections import Counter, defaultdict
@@ -111,6 +113,8 @@ args = sys.argv[1:]
 acumular = opcion(args, '--acumular')
 personas = opcion(args, '--personas')
 usadas_csv = opcion(args, '--usadas')
+perfil = opcion(args, '--perfil')
+if perfil and not usadas_csv: sys.exit('--perfil necesita --usadas')
 if len(args) != 2: sys.exit(__doc__)
 src, out = args
 base = os.path.basename(src)
@@ -167,6 +171,46 @@ if usadas_csv:
     if sobran: sys.exit(f'Hay más usadas que emitidas en: {sobran}. ¿El CSV principal incluye las usadas?')
     doc['usadas'] = dict(sorted(usadas.items()))
     doc['usadasTotal'] = sum(usadas.values())
+
+if perfil:
+    # Marca cada entrada emitida como usada o no, contando repeticiones (hay personas con varias entradas idénticas).
+    campos = ('Entrada', 'Nombre', 'Apellido', 'Documento', 'Email', 'Fecha de compra')
+    llave = lambda r: tuple((r.get(k) or '').strip().lower() for k in campos)
+    with open(usadas_csv, encoding='utf-8-sig', newline='') as f:
+        por_usar = Counter(llave(r) for r in csv.DictReader(f))
+    EVENTO = datetime(int(y), int(mo), int(d))
+    def edad(v):
+        m = re.match(r'(\d{1,2})/(\d{1,2})/(\d{4})', (v or '').strip())
+        if not m or m[0] == '01/01/1970': return 'Sin dato'
+        n = datetime(int(m[3]), int(m[2]), int(m[1]))
+        a = EVENTO.year - n.year - ((EVENTO.month, EVENTO.day) < (n.month, n.day))
+        if a < 15 or a > 90: return 'Sin dato'
+        for tope, rango in ((20, 'Hasta 20'), (24, '21 a 24'), (29, '25 a 29'), (39, '30 a 39'), (49, '40 a 49')):
+            if a <= tope: return rango
+        return '50 o más'
+    def val(v, otros={'other': 'Otro'}):
+        v = (v or '').strip()
+        return 'Sin dato' if not v else otros.get(v, v)
+    VINCULO = {'other': 'Otro', 'No pertenezco a la comunidad UTN': 'No pertenece a UTN'}
+    UTN_SI = {'Estudiante', 'Graduado', 'Docente'}
+    filas_p = []
+    for r in crudas:
+        k = llave(r)
+        usada = por_usar[k] > 0
+        if usada: por_usar[k] -= 1
+        vin = val(r.get('¿Perteneces a la comunidad UTN?'), VINCULO)
+        filas_p.append({'t': entrada_de(r), 'u': int(usada),
+                        'utn': 'Sí' if vin in UTN_SI else 'No' if vin == 'No pertenece a UTN' else vin,
+                        'vin': vin, 'esp': val(r.get('Especialidad')), 'anio': val(r.get('Año que estas cursando')),
+                        'edad': edad(r.get('Fecha de nacimiento')),
+                        'prev': val(r.get('¿Participaste de alguna edición de TEDxUTNCórdoba?'), {'Si': 'Sí', 'other': 'Otro'}),
+                        'canal': val(r.get('¿Como te enteraste de la 6° edicion?'), {'other': 'Otro', 'Stand TEDXUTNCÓRDOBA': 'Stand TEDxUTNCórdoba'}),
+                        'tit': val(r.get('¿Es quién compró la entrada?'))})
+    if sum(x['u'] for x in filas_p) != doc['usadasTotal']:
+        sys.exit('No pude marcar todas las usadas en la base de emitidas.')
+    with open(perfil, 'w', encoding='utf-8') as f:
+        json.dump({'corte': f'{fecha} {hora}', 'filas': filas_p}, f, ensure_ascii=False, separators=(',', ':'))
+    print(f'{perfil}: {len(filas_p)} entradas, {doc["usadasTotal"]} usadas')
 if not (sum(t['cantidad'] for t in tipos) == doc['total'] == sum(x['total'] for x in dias)):
     sys.exit('Los totales no cierran entre tipos, días y filas.')
 with open(out, 'w', encoding='utf-8') as f:

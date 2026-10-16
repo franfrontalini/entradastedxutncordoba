@@ -10,3 +10,5 @@ __pycache__/
 !docs/reportes.json
 # Listado de asistentes, solo cifrado con el código de acceso (scripts/cifrar_asistentes.mjs).
 !docs/asistentes.json
+# Perfil de asistentes (segmentos por entrada, sin nombres), solo cifrado con el mismo código.
+!docs/perfil.json
