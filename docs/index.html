@@ -121,6 +121,11 @@ input[type="search"] { font: inherit; color: var(--ink); background: var(--surfa
 input[type="search"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .p-count { font-size: 13.5px; color: var(--ink-2); margin-left: auto; align-self: center; }
 .privado { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-2); border: 1px solid var(--axis); border-radius: 4px; padding: 1px 6px; margin-left: 8px; vertical-align: 2px; }
+.uso-track { height: 10px; display: flex; background: var(--wash); border-radius: 0 4px 4px 0; }
+.uso-track .u { height: 10px; border-radius: 0 4px 4px 0; min-width: 2px; }
+.uso-track .e { height: 10px; border-radius: 0 4px 4px 0; display: flex; }
+.uso-key { display: inline-flex; align-items: center; gap: 6px; }
+.uso-key .sw.vacio { background: var(--wash); border: 1px solid var(--axis); }
 .p-codigo { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; }
 .p-codigo label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--ink-2); }
 .p-codigo input { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--axis); border-radius: 6px; padding: 6px 10px; width: 200px; max-width: 100%; letter-spacing: 0.04em; }
@@ -193,6 +198,17 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
         <div class="legend" id="legend-tipos"></div>
       </div>
       <div class="scroll"><table id="t-tipos"></table></div>
+    </section>
+
+    <section class="panel" id="p-uso" hidden>
+      <div class="panel-head">
+        <div>
+          <h2>Emitidas vs usadas</h2>
+          <p class="sub" id="uso-sub">Entradas emitidas de cada tipo y cuántas se usaron en el evento.</p>
+        </div>
+        <div class="legend"><span class="uso-key"><span class="sw" style="background:var(--ink-2)"></span>Usadas</span><span class="uso-key"><span class="sw vacio"></span>Sin usar</span></div>
+      </div>
+      <div class="scroll"><table id="t-uso"></table></div>
     </section>
 
     <section class="panel" id="p-personas" hidden>
@@ -312,6 +328,7 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
     return {
       id, fecha: /^\d{4}-\d{2}-\d{2}$/.test(d.fecha) ? d.fecha : id, hora: String(d.hora || ''),
       total: +d.total || 0, pagas: +d.pagas || 0, sinCargo: +d.sinCargo || 0, recaudacion: +d.recaudacion || 0, tipos, dias,
+      usadas: d.usadas && typeof d.usadas === 'object' ? Object.fromEntries(Object.entries(d.usadas).map(([k, v]) => [String(k), +v || 0])) : null,
       pendientes: d.pendientes && typeof d.pendientes === 'object' ? Object.fromEntries(Object.entries(d.pendientes).map(([k, v]) => [String(k), +v || 0])) : {},
     };
   }
@@ -389,12 +406,47 @@ button.btn:disabled { opacity: 0.6; cursor: progress; }
       p ? el('td', { class: 'num' }, signo(r.total - p.total) || '0') : null, el('td', { class: 'num' }, '100%'), el('td', { class: 'hide-sm' }, ''), el('td', { class: 'num' }, money(r.recaudacion)));
     $('t-tipos').replaceChildren(el('thead', null, head), el('tbody', null, ...rows), el('tfoot', null, foot));
 
+    renderUso(r);
+
     // Día seleccionado
     if (!st.dia || !r.dias.some((x) => x.dia === st.dia)) st.dia = r.dias.length ? r.dias[r.dias.length - 1].dia : null;
     $('sel-dia').replaceChildren(...r.dias.slice().reverse().map((x) => { const o = el('option', { value: x.dia }, larga(x.dia) + ' · ' + num(x.total)); if (x.dia === st.dia) o.selected = true; return o; }));
     renderDia(r);
     renderChart(r);
     renderReportes();
+  }
+
+  // Emitidas vs usadas: solo en el corte final, cuando se cargó el export de entradas usadas.
+  function renderUso(r) {
+    const panel = $('p-uso');
+    if (!r.usadas) { panel.hidden = true; return; }
+    panel.hidden = false;
+    const u = (t) => r.usadas[t.nombre] || 0;
+    const pct = (us, em) => em ? (100 * us / em).toFixed(1).replace('.', ',') + '%' : '—';
+    const bloques = GRUPOS.map((g) => {
+      const ts = r.tipos.filter((t) => t.grupo === g.id && t.cantidad > 0).sort((a, b) => b.cantidad - a.cantidad);
+      return { g, ts, comp: ts.some((t) => sub(t.nombre)), em: ts.reduce((a, t) => a + t.cantidad, 0), us: ts.reduce((a, t) => a + u(t), 0) };
+    }).filter((b) => b.ts.length);
+    const max = Math.max(1, ...bloques.map((b) => b.comp ? b.em : Math.max(...b.ts.map((t) => t.cantidad))));
+    const fila = (c, nombre, em, us, tipo) => el('tr', { class: tipo },
+      el('td', { class: 'name' }, el('span', { class: 'n' }, tipo === 'hijo' ? el('span', { class: 'rama' }) : sw(c), nombre)),
+      el('td', { class: 'barcell hide-sm' }, el('div', { class: 'uso-track', style: 'width:' + (100 * em / max).toFixed(2) + '%' },
+        el('div', { class: 'u', style: 'width:' + (em ? 100 * us / em : 0).toFixed(2) + '%;background:' + c + (tipo === 'hijo' ? ';opacity:.6' : '') }))),
+      el('td', { class: 'num' }, num(em)),
+      el('td', { class: 'num' }, el('strong', null, num(us))),
+      el('td', { class: 'num dim' }, num(em - us)),
+      el('td', { class: 'num' }, pct(us, em)));
+    const rows = [];
+    bloques.forEach((b) => {
+      if (!b.comp) { b.ts.forEach((t) => rows.push(fila(b.g.c, t.nombre, t.cantidad, u(t), ''))); return; }
+      rows.push(fila(b.g.c, b.g.label, b.em, b.us, 'padre'));
+      b.ts.forEach((t) => rows.push(fila(b.g.c, sub(t.nombre) || t.nombre, t.cantidad, u(t), 'hijo')));
+    });
+    const tu = Object.values(r.usadas).reduce((a, n) => a + n, 0);
+    const head = el('tr', null, el('th', null, 'Tipo de entrada'), el('th', { class: 'hide-sm' }, ''), el('th', { class: 'num' }, 'Emitidas'), el('th', { class: 'num' }, 'Usadas'), el('th', { class: 'num' }, 'Sin usar'), el('th', { class: 'num' }, '% de uso'));
+    const foot = el('tr', null, el('td', null, 'Total'), el('td', { class: 'hide-sm' }, ''), el('td', { class: 'num' }, num(r.total)), el('td', { class: 'num' }, num(tu)), el('td', { class: 'num' }, num(r.total - tu)), el('td', { class: 'num' }, pct(tu, r.total)));
+    $('t-uso').replaceChildren(el('thead', null, head), el('tbody', null, ...rows), el('tfoot', null, foot));
+    $('uso-sub').textContent = 'Corte final: ' + num(r.total) + ' entradas emitidas, ' + num(tu) + ' usadas en el evento (' + pct(tu, r.total) + ').';
   }
 
   function renderDia(r) {

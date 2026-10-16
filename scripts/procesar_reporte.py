@@ -5,6 +5,8 @@ Con --acumular, además agrega el corte al archivo que lee el tablero en GitHub 
 Con --personas <archivo.json>, además genera el listado de asistentes de todas las entradas
 (nombre, apellido, DNI, mail, teléfono). Ese archivo tiene datos personales: nunca va al repo sin cifrar
 (ver scripts/cifrar_asistentes.mjs).
+Con --usadas <csv de entradas UTILIZADAS>, además cuenta por tipo cuántas de las emitidas se usaron en el evento
+(el <csv> principal tiene que ser el de todas las emitidas: usadas + habilitadas sin usar).
 Solo usa la librería estándar (Python 3.9+)."""
 import sys, re, json, os, csv, hashlib, unicodedata
 from collections import Counter, defaultdict
@@ -108,6 +110,7 @@ def opcion(args, nombre):
 args = sys.argv[1:]
 acumular = opcion(args, '--acumular')
 personas = opcion(args, '--personas')
+usadas_csv = opcion(args, '--usadas')
 if len(args) != 2: sys.exit(__doc__)
 src, out = args
 base = os.path.basename(src)
@@ -155,6 +158,15 @@ doc = {'fecha': fecha, 'hora': hora, 'archivo': base, 'total': len(filas),
        'pagas': sum(r['precio'] > 0 for r in filas), 'sinCargo': sum(r['precio'] <= 0 for r in filas),
        'recaudacion': int(sum(r['precio'] for r in filas)), 'tipos': tipos, 'dias': dias}
 if pendientes: doc['pendientes'] = {t: len(ps) for t, ps in pendientes.items()}
+if usadas_csv:
+    # Entradas usadas en el evento, con la misma clasificación que las emitidas.
+    with open(usadas_csv, encoding='utf-8-sig', newline='') as f:
+        usadas = Counter(entrada_de(r) for r in csv.DictReader(f))
+    emitidas = {t['nombre']: t['cantidad'] for t in tipos}
+    sobran = {t: n for t, n in usadas.items() if n > emitidas.get(t, 0)}
+    if sobran: sys.exit(f'Hay más usadas que emitidas en: {sobran}. ¿El CSV principal incluye las usadas?')
+    doc['usadas'] = dict(sorted(usadas.items()))
+    doc['usadasTotal'] = sum(usadas.values())
 if not (sum(t['cantidad'] for t in tipos) == doc['total'] == sum(x['total'] for x in dias)):
     sys.exit('Los totales no cierran entre tipos, días y filas.')
 with open(out, 'w', encoding='utf-8') as f:

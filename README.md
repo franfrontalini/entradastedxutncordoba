@@ -26,6 +26,17 @@ y la variación entre un reporte y el siguiente.
    Hacé commit y push de ese archivo y GitHub Pages se actualiza en uno o dos minutos.
 4. Para el artifact de claude.ai, el mismo resumen se guarda en la colección `reportes` de su base, con la fecha del corte como id.
 
+## Emitidas vs usadas (corte final)
+
+Después del evento, el export de habilitadas solo trae las entradas que no se usaron. Para el corte final se arma un CSV con
+todas las emitidas (export de UTILIZADAS + export de HABILITADAS) y se procesa con `--usadas`:
+
+```bash
+python3 -I scripts/procesar_reporte.py "<emitidas.csv>" /tmp/corte.json --acumular docs/reportes.json --usadas "tickets_UTILIZADAS-….csv"
+```
+
+El tablero muestra entonces el panel *Emitidas vs usadas* con el porcentaje de uso por categoría.
+
 ## Asistentes por tipo de entrada
 
 El panel muestra nombre, apellido, DNI, mail y teléfono de todas las entradas, filtrable por tipo.
